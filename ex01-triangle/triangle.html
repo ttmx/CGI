@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script id="vertex-shader" type="x-shader/x-vertex">
+	attribute vec4 vPosition;
+	uniform vec2 uRotationVec;
+	uniform float time;
+	void main(){
+		vec2 rotatedPosition = vec2(
+		  vPosition.x * uRotationVec.y +
+				vPosition.y * uRotationVec.x + uRotationVec.y * 0.2,
+		  vPosition.y * uRotationVec.y -
+				vPosition.x * uRotationVec.x + uRotationVec.x * 0.2
+		);
+		gl_Position = vec4(rotatedPosition,0.0,1.0);
+}
+</script>
+<script id="fragment-shader" type="x-shader/x-fragment">
+	precision mediump float;
+	void main() {
+		gl_FragColor = vec4(0.611765, 0.768627, 1.0, 1.0);
+}
+</script>
+<script id="border-shader" type="x-shader/x-fragment">
+precision mediump float;
+void main() {
+    gl_FragColor = vec4(1.0, 0.796078, 0.419608, 1.0);
+}
+</script>
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="triangle.js"></script>
+<style>
+	body{
+		margin:0;
+		background: #292d3e
+	}
+</style>
+</head>
+<body>
+    <title>Square</title>
+    <canvas style="margin-left: auto; margin-right: auto; display:block; width:100vh;height:100vh" id="gl-canvas" width="860" height="860">
+        Oops... your browser doesn't support the HTML5 canvas element"
+    </canvas>
+</body>
+</html>
