@@ -10,8 +10,7 @@ window.onload = function init() {
     if(!gl) { alert("WebGL isn't available"); }
 
     // Three vertices
-    let trivertices = [
-    ];
+    let trivertices = [];
 	for (let i = 0; i< numTri; i++){
 		let initV = [Math.random() * 2 - 1,Math.random()*2 - 1];
 		trivertices.push(vec2(initV[0],initV[1]));
@@ -39,13 +38,13 @@ window.onload = function init() {
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 
+    gl.useProgram(triProg);
     render();
 }
 
 function render(time) {
-    gl.useProgram(triProg);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, numTri*6);
+    gl.drawArrays(gl.TRIANGLES, 0, numTri*3);
 	window.requestAnimationFrame(render);
 }
 
