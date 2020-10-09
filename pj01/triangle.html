@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script id="vertex-shader" type="x-shader/x-vertex">
+	#define M_PI 3.1415926535897932384626433832795
+	attribute vec4 vPosition;
+	uniform float yScale;
+	uniform float time;
+	uniform float xScale;
+	float sinWave(float x){
+		return sin((time + x) * M_PI * xScale);
+	}
+	float randWave(float x){
+		return (cos((time + x)*M_PI*xScale*3.0) + sin((time+x)*M_PI*xScale))/2.0;
+	}
+	void main(){
+		gl_Position = vec4(vPosition.x,
+		(sinWave(vPosition.x))*yScale,0.0,1.0);
+	}
+</script>
+	<script id="fragment-shader" type="x-shader/x-fragment">
+	precision mediump float;
+	uniform vec4 vColor;
+	void main() {
+		gl_FragColor = vColor;
+	}
+</script>
+	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+	<script type="text/javascript" src="../Common/initShaders.js"></script>
+	<script type="text/javascript" src="../Common/MV.js"></script>
+	<script type="text/javascript" src="triangle.js"></script>
+	<link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+	<title>Square</title>
+	<div class="canvas-wrapper">
+		<canvas id="gl-canvas">
+			Oops... your browser doesn't support the HTML5 canvas element"
+		</canvas>
+		<div class = "test"></div>
+		<div id="optContainer">
+			<div id="options" class="card">
+				<div class="optmenu">
+					<div class="option" data-opt="sin">Onda Seno</div>
+					<div class="option" data-opt="cen">Onda Ceno</div>
+					<div class="option" data-opt="misc">Outros</div>
+
+				</div>
+			</div>
+		</div>
+</body>
+
+</html>

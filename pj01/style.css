@@ -1,0 +1,77 @@
+body {
+	background: #292d3e
+}
+
+#options {}
+
+#optContainer {
+	width: 100%;
+	position: fixed;
+	bottom: 8px;
+	left: 0;
+}
+
+.optmenu {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.option {
+	border-radius: 20px;
+	padding: calc(0.5em - 3px);
+	margin: 0.5rem auto;
+	font-family: "mononoki Nerd Font", "Ubuntu mono", "sans-serif";
+	font-weight: 1000;
+	font-size: 2em;
+	cursor: pointer;
+	transition: all 0.25s;
+	user-select: none;
+	color: #fff;
+	border-radius: 26px;
+	background: linear-gradient(145deg, #2c3042, #252938);
+	box-shadow: 12px 12px 25px #1e212e,
+		-12px -12px 25px #34394e;
+}
+.option:hover{
+	background: linear-gradient(145deg, #252938, #2c3042);
+}
+.option.active{
+	background: #292d3e;
+	box-shadow: inset 12px 12px 25px #1e212e,
+            inset -12px -12px 25px #34394e;
+}
+
+.canvas-wrapper {
+	border-radius: 50px;
+	position: relative;
+	/* background: #292d3e; */
+	/* box-shadow: inset 20px 20px 60px #1b1e29, */
+	/* 	inset -20px -20px 60px #373c53; */
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+}
+
+#gl-canvas {
+	display: block;
+	border-radius: 50px;
+}
+
+.test {
+	position: absolute;
+	border-radius: 50px;
+	box-shadow: inset 20px 20px 60px #1b1e29,
+	inset -20px -20px 60px #373c53;
+
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	display: block;
+	content: "aaaa";
+	height:100%;
+	width:100%;
+	background: transparent;
+}
