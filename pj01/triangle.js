@@ -1,7 +1,4 @@
 function resize(gl) {
-	// Lookup the size the browser is displaying the canvas in CSS pixels
-	// and compute a size needed to make our drawingbuffer match it in
-	// device pixels.
 	gl.canvas.width = window.innerWidth-16;
 	gl.canvas.height = window.innerHeight-120;
 	gl.viewport(0,0,gl.canvas.width,gl.canvas.height);
@@ -12,9 +9,11 @@ window.addEventListener("load", () => {
 
 	let gl;
 
-	let triProg;
+	let waveProg;
+	let glassProg;
 
-	let numVert = 1000;
+	let numVert = window.innerWidth-16;
+	let numGrid = 4;
 
 	let timeScale = 1;
 
@@ -35,15 +34,30 @@ window.addEventListener("load", () => {
 		});
 	}
 
-	console.log(gl);
 	window.addEventListener("resize", () => {
 		resize(gl);
 	});
 
-	// Three vertices
-	let trivertices = [];
+	let waveVertices = [];
 	for (let i = 0; i < numVert; i++) {
-		trivertices.push(-1 + i * 2 / numVert, 1);
+		waveVertices.push(-1 + i * 2 / numVert, 1);
+	}
+
+
+	let glassVertices = [];
+		glassVertices.push(0,-1);
+		glassVertices.push(0,1);
+		glassVertices.push(-1,0);
+		glassVertices.push(1,0);
+	for (let i = 0; i < numGrid; i++){
+		glassVertices.push(i/numGrid,-1);
+		glassVertices.push(i/numGrid,1);
+		glassVertices.push(-i/numGrid,-1);
+		glassVertices.push(-i/numGrid,1);
+		glassVertices.push(-1,i/numGrid);
+		glassVertices.push(1,i/numGrid);
+		glassVertices.push(-1,-i/numGrid);
+		glassVertices.push(1,-i/numGrid);
 	}
 
 	let colors = [
@@ -57,54 +71,68 @@ window.addEventListener("load", () => {
 	gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
 
 	// Load shaders and initialize attribute buffers
-	triProg = initShaders(gl, "vertex-shader", "fragment-shader");
-	gl.useProgram(triProg);
+	waveProg = initShaders(gl, "vertex-shader", "fragment-shader");
+	glassProg = initShaders(gl, "static-vert-shader", "fragment-shader");
+	gl.useProgram(waveProg);
 
 	// Load the data into the GPU
 	let bufferId = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(trivertices), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(waveVertices), gl.STATIC_DRAW);
 
 	// Associate our shader variables with our data buffer
-	let vPosition = gl.getAttribLocation(triProg, "vPosition");
+	let vPosition = gl.getAttribLocation(waveProg, "vPosition");
 	gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
 	gl.enableVertexAttribArray(vPosition);
 
-	let colorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, colors[0], gl.STATIC_DRAW);
 
-	let vColor = gl.getUniformLocation(triProg, "vColor");
-	const colorIndex = 1;
+	let vColor = gl.getUniformLocation(waveProg, "vColor");
+	let glassColor = gl.getUniformLocation(glassProg, "vColor");
+	let colorIndex = 1;
 	gl.uniform4f(vColor, colors[colorIndex][0], colors[colorIndex][1], colors[colorIndex][2], colors[colorIndex][3]);
 	gl.enableVertexAttribArray(vColor);
-	let yScale = gl.getUniformLocation(triProg, "yScale");
+
+
+	let yScale = gl.getUniformLocation(waveProg, "yScale");
 	gl.uniform1f(yScale, 0.5);
-	let xScale = gl.getUniformLocation(triProg, "xScale");
+
+	let xScale = gl.getUniformLocation(waveProg, "xScale");
 	gl.uniform1f(xScale, 1);
-	timeVar = gl.getUniformLocation(triProg, "time");
+
+	timeVar = gl.getUniformLocation(waveProg, "time");
 	gl.uniform1f(timeVar, 0);
 
-	gl.lineWidth(3)
-	render();
+	gl.useProgram(glassProg);
 
+	let glassVertBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, glassVertBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, flatten(glassVertices), gl.STATIC_DRAW);
 
-	// function resize(){
-	//     let canvas = document.getElementById("gl-canvas");
-	// 	numVert = window.innerWidth;
-	// 	canvas.width = window.innerWidth-16;
-	// 	canvas.height = window.innerHeight-120;
-	// 	gl.resizeCanvasToDisplaySize(canvas);
-	// }
+	colorIndex = 0;
+	gl.uniform4f(glassColor, colors[colorIndex][0], colors[colorIndex][1], colors[colorIndex][2], colors[colorIndex][3]);
 
-
-
+	gl.lineWidth(3);
 
 	function render(time) {
-		gl.uniform1f(timeVar, time * timeScale / 1000 / Math.PI);
 		gl.clear(gl.COLOR_BUFFER_BIT);
-		gl.drawArrays(gl.LINE_STRIP, 0, numVert);
+		renderWave(time);
+		renderGlass();
 		window.requestAnimationFrame(render);
+	}
+
+	function renderGlass(){
+		gl.useProgram(glassProg);
+		gl.bindBuffer(gl.ARRAY_BUFFER, glassVertBuffer);
+		gl.vertexAttribPointer(glassColor, 2, gl.FLOAT, false, 0, 0);
+		gl.drawArrays(gl.LINES, 0, numGrid*8 + 4);
+	}
+
+	function renderWave(time){
+		gl.useProgram(waveProg);
+		gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
+		gl.vertexAttribPointer(glassColor, 2, gl.FLOAT, false, 0, 0);
+		gl.uniform1f(timeVar, time * timeScale / 1000 / Math.PI);
+		gl.drawArrays(gl.LINE_STRIP, 0, numVert);
 	}
 
 	function toggleWave(id) {

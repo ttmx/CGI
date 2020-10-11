@@ -26,6 +26,12 @@
 		gl_FragColor = vColor;
 	}
 </script>
+	<script id="static-vert-shader" type="x-shader/x-vertex">
+	attribute vec4 vPosition;
+	void main() {
+		gl_Position = vPosition;
+	}
+</script>
 	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
 	<script type="text/javascript" src="../Common/initShaders.js"></script>
 	<script type="text/javascript" src="../Common/MV.js"></script>
@@ -39,7 +45,7 @@
 		<canvas id="gl-canvas">
 			Oops... your browser doesn't support the HTML5 canvas element"
 		</canvas>
-		<div class = "test"></div>
+		<div class="test"></div>
 		<div id="optContainer">
 			<div id="options" class="card">
 				<div class="optmenu">
