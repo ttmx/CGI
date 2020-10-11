@@ -1,146 +1,224 @@
 function resize(gl) {
-	gl.canvas.width = window.innerWidth-16;
-	gl.canvas.height = window.innerHeight-120;
-	gl.viewport(0,0,gl.canvas.width,gl.canvas.height);
+    gl.canvas.width = window.innerWidth - 16;
+    gl.canvas.height = window.innerHeight - 120;
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 }
 
 
 window.addEventListener("load", () => {
 
-	let gl;
+    let numVert = window.innerWidth - 16;
+    let numGrid = 4;
 
-	let waveProg;
-	let glassProg;
+    let timeScale = 1;
 
-	let numVert = window.innerWidth-16;
-	let numGrid = 4;
+    let canvas = document.getElementById("gl-canvas");
+    let gl = WebGLUtils.setupWebGL(canvas);
+    if (!gl) {
+        alert("WebGL isn't available");
+    }
+    resize(gl);
 
-	let timeScale = 1;
+    let buttons = document.getElementsByClassName("option");
 
-	let timeVar;
+    for (b of buttons) {
+        b.addEventListener("click", (elem) => {
+            elem.target.classList.toggle("active");
+            toggleWave(elem.target.dataset.opt);
+        });
+    }
 
+    window.addEventListener("resize", () => {
+        resize(gl);
+    });
 
-	let canvas = document.getElementById("gl-canvas");
-	gl = WebGLUtils.setupWebGL(canvas);
-	if (!gl) {alert("WebGL isn't available");}
-	resize(gl);
+    let waveVertices = [];
+    for (let i = 0; i < numVert; i++) {
+        waveVertices.push(-1 + i * 2 / numVert, 1);
+    }
 
-	let buttons = document.getElementsByClassName("option");
+    let glassVertices = [];
+    glassVertices.push(0, -1);
+    glassVertices.push(0, 1);
+    glassVertices.push(-1, 0);
+    glassVertices.push(1, 0);
+    for (let i = 0; i < numGrid; i++) {
+        glassVertices.push(i / numGrid, -1);
+        glassVertices.push(i / numGrid, 1);
+        glassVertices.push(-i / numGrid, -1);
+        glassVertices.push(-i / numGrid, 1);
+        glassVertices.push(-1, i / numGrid);
+        glassVertices.push(1, i / numGrid);
+        glassVertices.push(-1, -i / numGrid);
+        glassVertices.push(1, -i / numGrid);
+    }
 
-	for (b of buttons) {
-		b.addEventListener("click", (elem) => {
-			elem.target.classList.toggle("active");
-			toggleWave(elem.target.dataset.opt);
-		});
-	}
+    // Configure WebGL
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
 
-	window.addEventListener("resize", () => {
-		resize(gl);
-	});
+    function generateWave() {
+        let waveProgram = initShaders(gl, "vertex-shader", "fragment-shader");
+        let wave = {
+            programInfo: {
+                program: waveProgram,
+                drawLength: numVert,
+                drawCall: function () {
+                    gl.drawArrays(gl.LINE_STRIP, 0, this.drawLength);
+                }
+            },
+            bufferInfo: {
+                buffer: gl.createBuffer(),
+                attribs: {
+                    vPosition: {
+                        loc: gl.getAttribLocation(waveProgram, "vPosition"),
+                        setter: function (buffer) {
+                            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                            gl.vertexAttribPointer(this.loc, 2, gl.FLOAT, false, 0, 0);
+                            gl.enableVertexAttribArray(this.loc);
+                        }
+                    }
+                }
+            },
+            uniforms: {
+                init: {
+                    xScale: {
+                        value: 1,
+                        loc: gl.getUniformLocation(waveProgram, "xScale"),
+                        setter: function (value) {
+                            gl.uniform1f(this.loc, value);
+                        }
+                    },
+                    yScale: {
+                        value: 0.5,
+                        loc: gl.getUniformLocation(waveProgram, "yScale"),
+                        setter: function (value) {
+                            gl.uniform1f(this.loc, value);
+                        }
+                    },
+                    vColor: {
+                        value: vec4(0.509803922, 0.666666667, 1.0, 1.0),
+                        loc: gl.getUniformLocation(waveProgram, "vColor"),
+                        setter: function (value) {
+                            gl.uniform4fv(this.loc, value);
+                        }
+                    }
+                },
+                render: {
+                    time: {
+                        value: null,
+                        loc: gl.getUniformLocation(waveProgram, "time"),
+                        setter: function (value) {
+                            gl.uniform1f(this.loc, value);
+                        },
+                        valueUpdater: function (time) {
+                            return time * timeScale / 1000 / Math.PI;
+                        }
+                    }
+                }
+            }
+        };
+        // Load the data into the GPU
+        gl.bindBuffer(gl.ARRAY_BUFFER, wave.bufferInfo.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(waveVertices), gl.STATIC_DRAW);
 
-	let waveVertices = [];
-	for (let i = 0; i < numVert; i++) {
-		waveVertices.push(-1 + i * 2 / numVert, 1);
-	}
+        gl.useProgram(waveProgram);
+        setUniforms(wave.uniforms.init);
+        return wave;
+    }
 
+    function generateGrid() {
+        let gridProgram = initShaders(gl, "static-vert-shader", "fragment-shader");
+        let grid = {
+            programInfo: {
+                program: gridProgram,
+                drawLength: numGrid * 8 + 4,
+                drawCall: function () {
+                    gl.drawArrays(gl.LINES, 0, this.drawLength);
+                }
+            },
+            bufferInfo: {
+                buffer: gl.createBuffer(),
+                attribs: {
+                    vPosition: {
+                        loc: gl.getAttribLocation(gridProgram, "vPosition"),
+                        setter: function (buffer) {
+                            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                            gl.vertexAttribPointer(this.loc, 2, gl.FLOAT, false, 0, 0);
+                            gl.enableVertexAttribArray(this.loc);
+                        }
+                    }
+                }
+            },
+            uniforms: {
+                init: {
+                    vColor: {
+                        value: vec4(0.470588235, 909803922.0, 0.552941176, 1.0),
+                        loc: gl.getUniformLocation(gridProgram, "vColor"),
+                        setter: function (value) {
+                            gl.uniform4fv(this.loc, value);
+                        }
+                    }
+                }
+            }
+        };
 
-	let glassVertices = [];
-		glassVertices.push(0,-1);
-		glassVertices.push(0,1);
-		glassVertices.push(-1,0);
-		glassVertices.push(1,0);
-	for (let i = 0; i < numGrid; i++){
-		glassVertices.push(i/numGrid,-1);
-		glassVertices.push(i/numGrid,1);
-		glassVertices.push(-i/numGrid,-1);
-		glassVertices.push(-i/numGrid,1);
-		glassVertices.push(-1,i/numGrid);
-		glassVertices.push(1,i/numGrid);
-		glassVertices.push(-1,-i/numGrid);
-		glassVertices.push(1,-i/numGrid);
-	}
+        gl.bindBuffer(gl.ARRAY_BUFFER, grid.bufferInfo.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(glassVertices), gl.STATIC_DRAW);
 
-	let colors = [
-		vec4(0.470588235, 909803922.0, 0.552941176, 1.0),
-		vec4(0.509803922, 0.666666667, 1.0, 1.0),
-		vec4(0.941176471, 0.443137255, 0.470588235, 1.0)
-	];
+        gl.useProgram(gridProgram);
+        setUniforms(grid.uniforms.init);
+        return grid;
+    }
 
-	// Configure WebGL
-	gl.viewport(0, 0, canvas.width, canvas.height);
-	gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
+    let wave = generateWave();
+    let grid = generateGrid();
 
-	// Load shaders and initialize attribute buffers
-	waveProg = initShaders(gl, "vertex-shader", "fragment-shader");
-	glassProg = initShaders(gl, "static-vert-shader", "fragment-shader");
-	gl.useProgram(waveProg);
+    let objectsToRender = [];
+    objectsToRender.push(wave);
+    objectsToRender.push(grid);
 
-	// Load the data into the GPU
-	let bufferId = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(waveVertices), gl.STATIC_DRAW);
+    gl.lineWidth(3);
 
-	// Associate our shader variables with our data buffer
-	let vPosition = gl.getAttribLocation(waveProg, "vPosition");
-	gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(vPosition);
+    function render(time) {
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        objectsToRender.forEach(object => {
+            gl.useProgram(object.programInfo.program);
+            setAttribs(object.bufferInfo);
+            updateUniforms(object.uniforms.render, time);
+            setUniforms(object.uniforms.render);
+            object.programInfo.drawCall();
+        });
+        requestAnimFrame(render);
+    }
 
+    function setAttribs(bufferInfo) {
+        for (const attribName in bufferInfo.attribs) {
+            const attrib = bufferInfo.attribs[attribName];
+            attrib.setter(bufferInfo.buffer);
+        }
+    }
 
-	let vColor = gl.getUniformLocation(waveProg, "vColor");
-	let glassColor = gl.getUniformLocation(glassProg, "vColor");
-	let colorIndex = 1;
-	gl.uniform4f(vColor, colors[colorIndex][0], colors[colorIndex][1], colors[colorIndex][2], colors[colorIndex][3]);
-	gl.enableVertexAttribArray(vColor);
+    function setUniforms(uniforms) {
+        for (const uniformName in uniforms) {
+            const uniform = uniforms[uniformName];
+            uniform.setter(uniform.value);
+        }
+    }
 
+    function updateUniforms(uniforms, time) {
+        for (const renderKey in uniforms) {
+            const uniform = uniforms[renderKey];
+            uniform.value = uniform.valueUpdater(time);
+        }
+    }
 
-	let yScale = gl.getUniformLocation(waveProg, "yScale");
-	gl.uniform1f(yScale, 0.5);
+    function toggleWave(id) {
+        switch (id) {
+            case "sin":
+                break;
+        }
+    }
 
-	let xScale = gl.getUniformLocation(waveProg, "xScale");
-	gl.uniform1f(xScale, 1);
-
-	timeVar = gl.getUniformLocation(waveProg, "time");
-	gl.uniform1f(timeVar, 0);
-
-	gl.useProgram(glassProg);
-
-	let glassVertBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, glassVertBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, flatten(glassVertices), gl.STATIC_DRAW);
-
-	colorIndex = 0;
-	gl.uniform4f(glassColor, colors[colorIndex][0], colors[colorIndex][1], colors[colorIndex][2], colors[colorIndex][3]);
-
-	gl.lineWidth(3);
-
-	function render(time) {
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		renderWave(time);
-		renderGlass();
-		window.requestAnimationFrame(render);
-	}
-
-	function renderGlass(){
-		gl.useProgram(glassProg);
-		gl.bindBuffer(gl.ARRAY_BUFFER, glassVertBuffer);
-		gl.vertexAttribPointer(glassColor, 2, gl.FLOAT, false, 0, 0);
-		gl.drawArrays(gl.LINES, 0, numGrid*8 + 4);
-	}
-
-	function renderWave(time){
-		gl.useProgram(waveProg);
-		gl.bindBuffer(gl.ARRAY_BUFFER, bufferId);
-		gl.vertexAttribPointer(glassColor, 2, gl.FLOAT, false, 0, 0);
-		gl.uniform1f(timeVar, time * timeScale / 1000 / Math.PI);
-		gl.drawArrays(gl.LINE_STRIP, 0, numVert);
-	}
-
-	function toggleWave(id) {
-		switch (id) {
-			case "sin":
-				break;
-		}
-	}
-
-	window.requestAnimationFrame(render);
+    requestAnimFrame(render);
 });
