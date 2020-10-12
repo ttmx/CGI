@@ -1,7 +1,7 @@
 function resize(gl) {
-    gl.canvas.width = window.innerWidth - 16;
-    gl.canvas.height = window.innerHeight - 120;
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.canvas.width = gl.canvas.clientWidth;
+    gl.canvas.height = gl.canvas.clientHeight;
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 }
 
 
@@ -30,7 +30,6 @@ window.addEventListener("load", () => {
     });
 
     // Configure WebGL
-    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
 
     function generateWave() {
@@ -175,6 +174,7 @@ window.addEventListener("load", () => {
     gl.lineWidth(3);
 
     function render(time) {
+        resize(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
         objectsToRender.forEach(object => {
             gl.useProgram(object.programInfo.program);

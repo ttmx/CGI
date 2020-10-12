@@ -1,5 +1,7 @@
 body {
-	background: #292d3e
+	background: #292d3e;
+	margin: auto;
+	max-width: 1216px;
 }
 
 #options {}
@@ -46,32 +48,27 @@ body {
 .canvas-wrapper {
 	border-radius: 50px;
 	position: relative;
-	/* background: #292d3e; */
-	/* box-shadow: inset 20px 20px 60px #1b1e29, */
-	/* 	inset -20px -20px 60px #373c53; */
+	top: 8px;
 	margin-left: auto;
 	margin-right: auto;
 	display: block;
+	height: 0;
+	padding-bottom: min(66.6666%, 800px);
+	width: min(calc(100% - 16px), 1200px);
 }
 
 #gl-canvas {
 	display: block;
 	border-radius: 50px;
+	position: absolute;
+	width: 100%;
+	height: 100%;
 }
 
 .test {
 	position: absolute;
 	border-radius: 50px;
-	box-shadow: inset 20px 20px 60px #1b1e29,
-	inset -20px -20px 60px #373c53;
-
-	top: 0;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	display: block;
-	content: "aaaa";
-	height:100%;
-	width:100%;
-	background: transparent;
+	box-shadow: inset 20px 20px 60px #1b1e29, inset -20px -20px 60px #373c53;
+	height: 100%;
+	width: 100%;
 }
