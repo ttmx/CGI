@@ -4,10 +4,16 @@
 <head>
 	<script id="vertex-shader" type="x-shader/x-vertex">
 	#define M_PI 3.1415926535897932384626433832795
-	attribute vec4 vPosition;
+	#define MAX_SAMPLES 10000.0
+	attribute float vSampleTime;
 	uniform float yScale;
 	uniform float time;
 	uniform float xScale;
+
+	float map(float value, float inMin, float inMax, float outMin, float outMax) {
+		return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+	}
+
 	float sinWave(float x){
 		return sin((time + x) * M_PI * xScale);
 	}
@@ -15,8 +21,12 @@
 		return (cos((time + x)*M_PI*xScale*3.0) + sin((time+x)*M_PI*xScale))/2.0;
 	}
 	void main(){
-		gl_Position = vec4(vPosition.x,
-		(sinWave(vPosition.x))*yScale,0.0,1.0);
+		float mappedVSampleTime = map(vSampleTime, 0.0, MAX_SAMPLES - 1.0, -1.0, 1.0);
+		gl_Position = vec4(
+						mappedVSampleTime,
+						sinWave(mappedVSampleTime)*yScale,
+						0.0,
+						1.0);
 	}
 </script>
 	<script id="fragment-shader" type="x-shader/x-fragment">

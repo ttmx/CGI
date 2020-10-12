@@ -7,9 +7,6 @@ function resize(gl) {
 
 window.addEventListener("load", () => {
 
-    let numVert = window.innerWidth - 16;
-
-
     let timeScale = 1;
 
     let canvas = document.getElementById("gl-canvas");
@@ -32,22 +29,22 @@ window.addEventListener("load", () => {
         resize(gl);
     });
 
-    let waveVertices = [];
-    for (let i = 0; i < numVert; i++) {
-        waveVertices.push(-1 + i * 2 / numVert, 1);
-    }
-
-
     // Configure WebGL
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
 
     function generateWave() {
+        const endToEndSamples = 10000.0;
+        let waveVertices = [];
+        for (let i = 0.0; i < endToEndSamples; i++) {
+            waveVertices.push(i);
+        }
+
         let waveProgram = initShaders(gl, "vertex-shader", "fragment-shader");
         let wave = {
             programInfo: {
                 program: waveProgram,
-                drawLength: numVert,
+                drawLength: endToEndSamples,
                 drawCall: function () {
                     gl.drawArrays(gl.LINE_STRIP, 0, this.drawLength);
                 }
@@ -55,11 +52,11 @@ window.addEventListener("load", () => {
             bufferInfo: {
                 buffer: gl.createBuffer(),
                 attribs: {
-                    vPosition: {
-                        loc: gl.getAttribLocation(waveProgram, "vPosition"),
+                    vSampleTime: {
+                        loc: gl.getAttribLocation(waveProgram, "vSampleTime"),
                         setter: function (buffer) {
                             gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-                            gl.vertexAttribPointer(this.loc, 2, gl.FLOAT, false, 0, 0);
+                            gl.vertexAttribPointer(this.loc, 1, gl.FLOAT, false, 0, 0);
                             gl.enableVertexAttribArray(this.loc);
                         }
                     }
