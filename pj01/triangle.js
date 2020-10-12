@@ -31,6 +31,9 @@ window.addEventListener("load", () => {
 
     // Configure WebGL
     gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
+	gl.enable(gl.BLEND);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
 
     function generateWave() {
         const endToEndSamples = 10000.0;
@@ -45,6 +48,7 @@ window.addEventListener("load", () => {
                 program: waveProgram,
                 drawLength: endToEndSamples,
                 drawCall: function () {
+    				gl.lineWidth(3);
                     gl.drawArrays(gl.LINE_STRIP, 0, this.drawLength);
                 }
             },
@@ -71,7 +75,7 @@ window.addEventListener("load", () => {
                         }
                     },
                     yScale: {
-                        value: 0.5,
+                        value: 0.9,
                         loc: gl.getUniformLocation(waveProgram, "yScale"),
                         setter: function (value) {
                             gl.uniform1f(this.loc, value);
@@ -127,6 +131,7 @@ window.addEventListener("load", () => {
                 program: gridProgram,
                 drawLength: 2 * (xLength - 1) + 2 * (yLength - 1),
                 drawCall: function () {
+    				gl.lineWidth(1);
                     gl.drawArrays(gl.LINES, 0, this.drawLength);
                 }
             },
@@ -146,7 +151,7 @@ window.addEventListener("load", () => {
             uniforms: {
                 init: {
                     vColor: {
-                        value: vec4(0.470588235, 909803922.0, 0.552941176, 1.0),
+                        value: vec4(0.470588235, 0.909803922, 0.552941176, 0.6),
                         loc: gl.getUniformLocation(gridProgram, "vColor"),
                         setter: function (value) {
                             gl.uniform4fv(this.loc, value);
@@ -171,7 +176,6 @@ window.addEventListener("load", () => {
     objectsToRender.push(wave);
     objectsToRender.push(grid);
 
-    gl.lineWidth(3);
 
     function render(time) {
         resize(gl);
