@@ -8,7 +8,7 @@ function resize(gl) {
 window.addEventListener("load", () => {
 
     let numVert = window.innerWidth - 16;
-    let numGrid = 4;
+
 
     let timeScale = 1;
 
@@ -37,21 +37,6 @@ window.addEventListener("load", () => {
         waveVertices.push(-1 + i * 2 / numVert, 1);
     }
 
-    let glassVertices = [];
-    glassVertices.push(0, -1);
-    glassVertices.push(0, 1);
-    glassVertices.push(-1, 0);
-    glassVertices.push(1, 0);
-    for (let i = 0; i < numGrid; i++) {
-        glassVertices.push(i / numGrid, -1);
-        glassVertices.push(i / numGrid, 1);
-        glassVertices.push(-i / numGrid, -1);
-        glassVertices.push(-i / numGrid, 1);
-        glassVertices.push(-1, i / numGrid);
-        glassVertices.push(1, i / numGrid);
-        glassVertices.push(-1, -i / numGrid);
-        glassVertices.push(1, -i / numGrid);
-    }
 
     // Configure WebGL
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -128,11 +113,23 @@ window.addEventListener("load", () => {
     }
 
     function generateGrid() {
-        let gridProgram = initShaders(gl, "static-vert-shader", "fragment-shader");
+        let xLength = 12;
+        let yLength = 8;
+        let gridVertices = [];
+        for (let i = 1; i < xLength; i++) {
+            gridVertices.push(vec2(i, 0));
+            gridVertices.push(vec2(i, yLength));
+        }
+        for (let i = 1; i < yLength; i++) {
+            gridVertices.push(vec2(0, i));
+            gridVertices.push(vec2(xLength, i));
+        }
+
+        let gridProgram = initShaders(gl, "grid-v-shader", "fragment-shader");
         let grid = {
             programInfo: {
                 program: gridProgram,
-                drawLength: numGrid * 8 + 4,
+                drawLength: 2 * (xLength - 1) + 2 * (yLength - 1),
                 drawCall: function () {
                     gl.drawArrays(gl.LINES, 0, this.drawLength);
                 }
@@ -164,7 +161,7 @@ window.addEventListener("load", () => {
         };
 
         gl.bindBuffer(gl.ARRAY_BUFFER, grid.bufferInfo.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(glassVertices), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(gridVertices), gl.STATIC_DRAW);
 
         gl.useProgram(gridProgram);
         setUniforms(grid.uniforms.init);
