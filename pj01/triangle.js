@@ -35,7 +35,7 @@ window.addEventListener("load", () => {
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     let verticesToDraw = 10000.0;
-	let xScale = 0.001;
+	let xScale = 0.01;
 	let yScale = 0.05;
 	let phase = 0.0;
 
@@ -190,6 +190,7 @@ window.addEventListener("load", () => {
     function render(time) {
         resize(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
+		verticesToDraw = (time/12%1000)*10;
         objectsToRender.forEach(object => {
             gl.useProgram(object.programInfo.program);
             setAttribs(object.bufferInfo);
@@ -231,18 +232,17 @@ window.addEventListener("load", () => {
 	document.getElementById("y-slider").addEventListener("input",(ev)=>{
 		let volts = [ 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
 		ev.target.parentElement.firstElementChild.innerText = "Y Scale ["+volts[ev.target.value]+"V]";
+		yScale = 1/volts[ev.target.value]/4;
 	})
 
 	document.getElementById("x-slider").addEventListener("input",(ev)=>{
-		let volts = [ "1e-4", "2e-4", "5e-4", "1e-3", "2e-3", "5e-3", "1e-2", "2e-2", "5e-2", ".1", ".2", ".5", "1", "2", "5", "10" ];
-		ev.target.parentElement.firstElementChild.innerText = "X Scale ["+volts[ev.target.value]+"s]";
+		let seconds = [ "1e-4", "2e-4", "5e-4", "1e-3", "2e-3", "5e-3", "1e-2", "2e-2", "5e-2", "0.1", "0.2", "0.5", "1", "2", "5", "10" ];
+		let secN = [0.0001,0.0002,0.0005,0.001,0.002,0.005,0.01,0.02,0.05,0.1, 0.2, 0.5, 1, 2, 5, 10 ];
+		ev.target.parentElement.firstElementChild.innerText = "X Scale ["+seconds[ev.target.value]+"s]";
+		xScale = secN[ev.target.value];
+
 	})
 
-	function voltSelection(sliderValue){
-		let volts = [ 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
-
-
-	}
 
 
     requestAnimFrame(render);
