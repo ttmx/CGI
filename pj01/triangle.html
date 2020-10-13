@@ -3,28 +3,29 @@
 
 <head>
 	<script id="vertex-shader" type="x-shader/x-vertex">
-	#define M_PI 3.1415926535897932384626433832795
-	#define MAX_SAMPLES 10000.0
+	const float PI = radians(180.0);
+	const float MAX_SAMPLES = 10000.0;
+	const float C4_FREQUENCY = 261.63;  //Hz
+	const float X_DIVS = 12.0;			//DIV
+	const float WAVE_AMPLITUDE = 20.0;  //Volts
 	attribute float vSampleTime;
-	uniform float yScale;
-	uniform float time;
-	uniform float xScale;
+	uniform float yScale;				//Volts/DIV
+	uniform float xScale;				//s/DIV
+	uniform float phase;				//radians
 
 	float map(float value, float inMin, float inMax, float outMin, float outMax) {
 		return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
 	}
 
-	float sinWave(float x){
-		return sin((time + x) * M_PI * xScale);
+	float c4Wave(float mappedVSampleTime, float phase, float xScale, float yScale) {
+		return WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * C4_FREQUENCY * xScale * X_DIVS + phase);
 	}
-	float randWave(float x){
-		return (cos((time + x)*M_PI*xScale*3.0) + sin((time+x)*M_PI*xScale))/2.0;
-	}
-	void main(){
+
+	void main() {
 		float mappedVSampleTime = map(vSampleTime, 0.0, MAX_SAMPLES - 1.0, -1.0, 1.0);
 		gl_Position = vec4(
 						mappedVSampleTime,
-						sinWave(mappedVSampleTime)*yScale,
+						c4Wave(mappedVSampleTime, phase, xScale, yScale),
 						0.0,
 						1.0);
 	}
@@ -79,7 +80,7 @@
 			<div class="optmenu">
 				<div class="slider-container">
 					<div> X Scale [2s]</div>
-					<input id="x-slider" type="range" class="slider" min="0" max="11" value="5" data-opt="xScale">
+					<input id="x-slider" type="range" class="slider" min="0" max="15" value="5" data-opt="xScale">
 				</div>
 				<div class="slider-container">
 					<div> Y Scale [5V]</div>

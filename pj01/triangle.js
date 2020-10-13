@@ -34,6 +34,10 @@ window.addEventListener("load", () => {
 	gl.enable(gl.BLEND);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    let verticesToDraw = 10000.0;
+	let xScale = 0.001;
+	let yScale = 0.05;
+	let phase = 0.0;
 
     function generateWave() {
         const endToEndSamples = 10000.0;
@@ -49,7 +53,7 @@ window.addEventListener("load", () => {
                 drawLength: endToEndSamples,
                 drawCall: function () {
     				gl.lineWidth(3);
-                    gl.drawArrays(gl.LINE_STRIP, 0, this.drawLength);
+                    gl.drawArrays(gl.LINE_STRIP, 0, verticesToDraw);
                 }
             },
             bufferInfo: {
@@ -67,20 +71,6 @@ window.addEventListener("load", () => {
             },
             uniforms: {
                 init: {
-                    xScale: {
-                        value: 1,
-                        loc: gl.getUniformLocation(waveProgram, "xScale"),
-                        setter: function (value) {
-                            gl.uniform1f(this.loc, value);
-                        }
-                    },
-                    yScale: {
-                        value: 0.9,
-                        loc: gl.getUniformLocation(waveProgram, "yScale"),
-                        setter: function (value) {
-                            gl.uniform1f(this.loc, value);
-                        }
-                    },
                     vColor: {
                         value: vec4(0.509803922, 0.666666667, 1.0, 1.0),
                         loc: gl.getUniformLocation(waveProgram, "vColor"),
@@ -90,14 +80,34 @@ window.addEventListener("load", () => {
                     }
                 },
                 render: {
-                    time: {
-                        value: null,
-                        loc: gl.getUniformLocation(waveProgram, "time"),
+                    xScale: {
+                        value: 0.001,
+                        loc: gl.getUniformLocation(waveProgram, "xScale"),
                         setter: function (value) {
                             gl.uniform1f(this.loc, value);
                         },
-                        valueUpdater: function (time) {
-                            return time * timeScale / 1000 / Math.PI;
+                        valueUpdater: function () {
+                            return xScale;
+                        }
+                    },
+                    yScale: {
+                        value: 0.05,
+                        loc: gl.getUniformLocation(waveProgram, "yScale"),
+                        setter: function (value) {
+                            gl.uniform1f(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return yScale;
+                        }
+                    },
+                    phase: {
+                        value: 0.0,
+                        loc: gl.getUniformLocation(waveProgram, "phase"),
+                        setter: function (value) {
+                            gl.uniform1f(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return phase;
                         }
                     }
                 }
