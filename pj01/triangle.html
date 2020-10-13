@@ -2,93 +2,92 @@
 <html>
 
 <head>
-	<script id="vertex-shader" type="x-shader/x-vertex">
-	const float PI = radians(180.0);
-	const float MAX_SAMPLES = 10000.0;
-	const float C4_FREQUENCY = 261.63;  //Hz
-	const float X_DIVS = 12.0;			//DIV
-	const float WAVE_AMPLITUDE = 20.0;  //Volts
-	attribute float vSampleTime;
-	uniform float yScale;				//Volts/DIV
-	uniform float xScale;				//s/DIV
-	uniform float phase;				//radians
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        const float PI = radians(180.0);
+        const float MAX_SAMPLES = 10000.0;
+        const float C4_FREQUENCY = 261.63;  //Hz
+        const float X_DIVS = 12.0;			//DIV
+        const float WAVE_AMPLITUDE = 20.0;  //Volts
+        attribute float vSampleTime;
+        uniform float yScale;				//Volts/DIV
+        uniform float xScale;				//s/DIV
+        uniform float phase;				//radians
 
-	float map(float value, float inMin, float inMax, float outMin, float outMax) {
-		return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
-	}
+        float map(float value, float inMin, float inMax, float outMin, float outMax) {
+            return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+        }
 
-	float c4Wave(float mappedVSampleTime, float phase, float xScale, float yScale) {
-		return WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * C4_FREQUENCY * xScale * X_DIVS + phase);
-	}
+        float c4Wave(float mappedVSampleTime, float phase, float xScale, float yScale) {
+            return WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * C4_FREQUENCY * xScale * X_DIVS + phase);
+        }
 
-	void main() {
-		float mappedVSampleTime = map(vSampleTime, 0.0, MAX_SAMPLES - 1.0, -1.0, 1.0);
-		gl_Position = vec4(
-						mappedVSampleTime,
-						c4Wave(mappedVSampleTime, phase, xScale, yScale),
-						0.0,
-						1.0);
-	}
-</script>
-	<script id="fragment-shader" type="x-shader/x-fragment">
-	precision mediump float;
-	uniform vec4 vColor;
-	void main() {
-		gl_FragColor = vColor;
-	}
-</script>
-	<script id="grid-v-shader" type="x-shader/x-vertex">
-	#define X_LENGTH 12.0
-	#define Y_LENGTH 8.0
-	attribute vec2 vPosition;
+        void main() {
+            float mappedVSampleTime = map(vSampleTime, 0.0, MAX_SAMPLES - 1.0, -1.0, 1.0);
+            gl_Position = vec4(
+            mappedVSampleTime,
+            c4Wave(mappedVSampleTime, phase, xScale, yScale),
+            0.0,
+            1.0);
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform vec4 vColor;
+        void main() {
+            gl_FragColor = vColor;
+        }
+    </script>
+    <script id="grid-v-shader" type="x-shader/x-vertex">
+        #define X_LENGTH 12.0
+        #define Y_LENGTH 8.0
+        attribute vec2 vPosition;
 
-	float map(float value, float inMin, float inMax, float outMin, float outMax) {
-		return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
-	}
+        float map(float value, float inMin, float inMax, float outMin, float outMax) {
+            return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+        }
 
-	void main() {
-		gl_Position = vec4(
-						map(vPosition.x, 0.0, X_LENGTH, -1.0, 1.0),
-						map(vPosition.y, 0.0, Y_LENGTH, -1.0, 1.0),
-						1.0,
-						1.0);
-	}
-</script>
-	<script type="text/javascript" src="../Common/webgl-utils.js"></script>
-	<script type="text/javascript" src="../Common/initShaders.js"></script>
-	<script type="text/javascript" src="../Common/MV.js"></script>
-	<script type="text/javascript" src="triangle.js"></script>
-	<link rel="stylesheet" href="./style.css">
+        void main() {
+            gl_Position = vec4(
+            map(vPosition.x, 0.0, X_LENGTH, -1.0, 1.0),
+            map(vPosition.y, 0.0, Y_LENGTH, -1.0, 1.0),
+            1.0,
+            1.0);
+        }
+    </script>
+    <script type="text/javascript" src="../Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../Common/initShaders.js"></script>
+    <script type="text/javascript" src="../Common/MV.js"></script>
+    <script type="text/javascript" src="triangle.js"></script>
+    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
-	<title>Square</title>
-	<div class="canvas-wrapper">
-		<canvas id="gl-canvas">
-			Oops... your browser doesn't support the HTML5 canvas element"
-		</canvas>
-		<div class="test"></div>
-
-	</div>
-	<div id="optContainer">
-		<div id="options" class="card">
-			<div class="optmenu">
-				<div class="option" data-opt="sin">Onda Seno</div>
-				<div class="option" data-opt="cen">Onda Ceno</div>
-				<div class="option" data-opt="misc">Outros</div>
-			</div>
-			<div class="optmenu">
-				<div class="slider-container">
-					<div> X Scale [1e-2s]</div>
-					<input id="x-slider" type="range" class="slider" min="0" max="15" value="6" data-opt="xScale">
-				</div>
-				<div class="slider-container">
-					<div> Y Scale [5V]</div>
-					<input id="y-slider" type="range" class="slider" min="0" max="11" value="5" data-opt="yScale">
-				</div>
-			</div>
-		</div>
-	</div>
+<title>Square</title>
+<div class="canvas-wrapper">
+    <canvas id="gl-canvas">
+        Oops... your browser doesn't support the HTML5 canvas element"
+    </canvas>
+    <div class="test"></div>
+</div>
+<div id="optContainer">
+    <div id="options" class="card">
+        <div class="optmenu">
+            <div class="option" data-opt="sin">Onda Seno</div>
+            <div class="option" data-opt="cen">Onda Ceno</div>
+            <div class="option" data-opt="misc">Outros</div>
+        </div>
+        <div class="optmenu">
+            <div class="slider-container">
+                <div> X Scale [0.05s]</div>
+                <input id="x-slider" type="range" class="slider" min="0" max="15" value="8" data-opt="xScale">
+            </div>
+            <div class="slider-container">
+                <div> Y Scale [10V]</div>
+                <input id="y-slider" type="range" class="slider" min="0" max="11" value="6" data-opt="yScale">
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>

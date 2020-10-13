@@ -31,13 +31,13 @@ window.addEventListener("load", () => {
 
     // Configure WebGL
     gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
-	gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     let verticesToDraw = 10000.0;
-	let xScale = 0.01;
-	let yScale = 0.05;
-	let phase = 0.0;
+    let xScale = 0.05;
+    let yScale = 0.025;
+    let phase = 0.0;
 
     function generateWave() {
         const endToEndSamples = 10000.0;
@@ -52,7 +52,7 @@ window.addEventListener("load", () => {
                 program: waveProgram,
                 drawLength: endToEndSamples,
                 drawCall: function () {
-    				gl.lineWidth(3);
+                    gl.lineWidth(3);
                     gl.drawArrays(gl.LINE_STRIP, 0, verticesToDraw);
                 }
             },
@@ -81,7 +81,7 @@ window.addEventListener("load", () => {
                 },
                 render: {
                     xScale: {
-                        value: 0.001,
+                        value: 0.05,
                         loc: gl.getUniformLocation(waveProgram, "xScale"),
                         setter: function (value) {
                             gl.uniform1f(this.loc, value);
@@ -91,7 +91,7 @@ window.addEventListener("load", () => {
                         }
                     },
                     yScale: {
-                        value: 0.05,
+                        value: 0.025,
                         loc: gl.getUniformLocation(waveProgram, "yScale"),
                         setter: function (value) {
                             gl.uniform1f(this.loc, value);
@@ -141,7 +141,7 @@ window.addEventListener("load", () => {
                 program: gridProgram,
                 drawLength: 2 * (xLength - 1) + 2 * (yLength - 1),
                 drawCall: function () {
-    				gl.lineWidth(1);
+                    gl.lineWidth(1);
                     gl.drawArrays(gl.LINES, 0, this.drawLength);
                 }
             },
@@ -190,7 +190,7 @@ window.addEventListener("load", () => {
     function render(time) {
         resize(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
-		verticesToDraw = (time/12%1000)*10;
+        verticesToDraw = (time / (12 * xScale) % 1000) * 10;
         objectsToRender.forEach(object => {
             gl.useProgram(object.programInfo.program);
             setAttribs(object.bufferInfo);
@@ -229,21 +229,19 @@ window.addEventListener("load", () => {
         }
     }
 
-	document.getElementById("y-slider").addEventListener("input",(ev)=>{
-		let volts = [ 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
-		ev.target.parentElement.firstElementChild.innerText = "Y Scale ["+volts[ev.target.value]+"V]";
-		yScale = 1/volts[ev.target.value]/4;
-	})
+    document.getElementById("y-slider").addEventListener("input", (ev) => {
+        let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+        ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
+        yScale = 1 / volts[ev.target.value] / 4;
+    });
 
-	document.getElementById("x-slider").addEventListener("input",(ev)=>{
-		let seconds = [ "1e-4", "2e-4", "5e-4", "1e-3", "2e-3", "5e-3", "1e-2", "2e-2", "5e-2", "0.1", "0.2", "0.5", "1", "2", "5", "10" ];
-		let secN = [0.0001,0.0002,0.0005,0.001,0.002,0.005,0.01,0.02,0.05,0.1, 0.2, 0.5, 1, 2, 5, 10 ];
-		ev.target.parentElement.firstElementChild.innerText = "X Scale ["+seconds[ev.target.value]+"s]";
-		xScale = secN[ev.target.value];
+    document.getElementById("x-slider").addEventListener("input", (ev) => {
+        let seconds = ["0.0001", "0.0002", "0.0005", "0.001", "0.002", "0.005", "0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "1", "2", "5", "10"];
+        let secN = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
+        ev.target.parentElement.firstElementChild.innerText = "X Scale [" + seconds[ev.target.value] + "s]";
+        xScale = secN[ev.target.value];
 
-	})
-
-
+    });
 
     requestAnimFrame(render);
 });
