@@ -80,6 +80,16 @@ window.addEventListener("load", () => {
                     }
                 },
                 render: {
+                    frequency: {
+                        value: 261.63,
+                        loc: gl.getUniformLocation(waveProgram, "frequency"),
+                        setter: function (value) {
+                            gl.uniform1f(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return this.value;
+                        }
+                    },
                     xScale: {
                         value: 0.05,
                         loc: gl.getUniformLocation(waveProgram, "xScale"),
@@ -242,6 +252,18 @@ window.addEventListener("load", () => {
     }
 
     document.getElementById("y-slider").addEventListener("input", (ev) => {
+        let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+        ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
+        yScale = 1 / volts[ev.target.value] / 4;
+    });
+
+    document.getElementById("freq1-slider").addEventListener("input", (ev) => {
+        let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+        ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
+        yScale = 1 / volts[ev.target.value] / 4;
+    });
+
+    document.getElementById("freq2-slider").addEventListener("input", (ev) => {
         let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
         ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
         yScale = 1 / volts[ev.target.value] / 4;

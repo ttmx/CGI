@@ -9,6 +9,7 @@
         const float X_DIVS = 12.0;			//DIV
         const float WAVE_AMPLITUDE = 20.0;  //Volts
         attribute float vSampleTime;
+		uniform float frequency;
         uniform float yScale;				//Volts/DIV
         uniform float xScale;				//s/DIV
         uniform float phase;				//radians
@@ -18,7 +19,7 @@
         }
 
         float c4Wave(float mappedVSampleTime, float phase, float xScale, float yScale) {
-            return WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * C4_FREQUENCY * xScale * X_DIVS + phase);
+            return WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * frequency * xScale * X_DIVS + phase);
         }
 
         void main() {
@@ -72,9 +73,15 @@
 <div id="optContainer">
     <div id="options" class="card">
         <div class="optmenu">
-            <div class="option" data-opt="sin">Onda Seno</div>
-            <div class="option" data-opt="cen">Onda Ceno</div>
-            <div class="option" data-opt="misc">Outros</div>
+            <div class="slider-container">
+                <div> C4 </div>
+                <input id="freq1-slider" type="range" class="slider" min="0" max="15" value="8" data-opt="freq1">
+            </div>
+            <div class="slider-container">
+                <div> Off </div>
+                <input id="freq2-slider" type="range" class="slider" min="0" max="15" value="0" data-opt="freq2">
+            </div>
+            <div class="option" data-opt="misc">Merge</div>
         </div>
         <div class="optmenu">
             <div class="slider-container">
