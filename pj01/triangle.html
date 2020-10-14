@@ -61,7 +61,6 @@
     <script type="text/javascript" src="triangle.js"></script>
     <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
 <title>Square</title>
 <div class="canvas-wrapper">
@@ -72,16 +71,13 @@
 </div>
 <div id="optContainer">
     <div id="options" class="card">
-        <div class="optmenu">
-            <div class="slider-container">
-                <div> C4 </div>
-                <input id="freq1-slider" type="range" class="slider" min="0" max="15" value="8" data-opt="freq1">
-            </div>
-            <div class="slider-container">
-                <div> Off </div>
-                <input id="freq2-slider" type="range" class="slider" min="0" max="15" value="0" data-opt="freq2">
-            </div>
-            <div class="option" data-opt="misc">Merge</div>
+		<div class="optmenu">
+			<div class="checkmenu">
+				<div><div class="checkbox toggle" data-opt="C4"></div>C4</div>
+				<div><div class="checkbox toggle" data-opt="MC4"></div>Major C4</div>
+				<div><div class="checkbox toggle" data-opt="F4"></div>F4+#</div>
+			</div>
+            <div class="option toggle" data-opt="merge">Merge</div>
         </div>
         <div class="optmenu">
             <div class="slider-container">

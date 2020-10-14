@@ -116,7 +116,7 @@ body {
 }
 
 .slider-container{
-	margin: 0.5rem auto;
+	margin: 0.5em auto;
 }
 .slider-container>div{
 	text-align: center;
@@ -124,4 +124,36 @@ body {
 	font-weight: 500;
 	color:#fefefe;
 	font-family: 'Mononoki Nerd Font','Ubuntu',sans-serif;
+}
+
+
+.checkmenu{
+	margin:0.0em auto;
+}
+.checkmenu>div>.checkbox{
+	position:relative;
+	top:4px;
+	float:left;
+	height:16px;
+	width:16px;
+	margin-right: 10px;
+	border-radius: 4px;
+	background: #292d3e;
+	box-shadow: inset 2px 2px 4px #1a1c27,
+				inset -2px -2px 4px #383e55;
+	cursor: pointer;
+}
+
+.checkmenu>div>.checkbox.active{
+	background: linear-gradient(145deg, #2c3042, #252938);
+	box-shadow:  2px 2px 4px #1a1c27,
+				 -2px -2px 4px #383e55;
+}
+
+.checkmenu>div{
+	color:#fefefe;
+	font-size: 16px;
+	line-height:26px;
+	width:130px;
+	font-family:'Mononoki Nerd Font','Ubuntu',sans-serif;
 }
