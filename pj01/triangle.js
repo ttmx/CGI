@@ -186,11 +186,18 @@ window.addEventListener("load", () => {
     objectsToRender.push(wave);
     objectsToRender.push(grid);
 
+    let prevVertices = 0;
 
     function render(time) {
         resize(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
         verticesToDraw = (time / (12 * xScale) % 1000) * 10;
+        if (prevVertices > verticesToDraw) {    //start of next wave
+            //TODO parametrize frequency
+            phase += 2 * Math.PI * (12 * xScale * 261.63 % 1);
+            phase %= (2 * Math.PI);
+        }
+        prevVertices = verticesToDraw;
         objectsToRender.forEach(object => {
             gl.useProgram(object.programInfo.program);
             setAttribs(object.bufferInfo);
