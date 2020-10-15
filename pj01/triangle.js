@@ -8,6 +8,10 @@ function resize(gl) {
 window.addEventListener("load", () => {
 
     const C4_WAVE_FREQUENCY = 261.63;
+    const E4_WAVE_FREQUENCY = 329.63;
+    const G4_WAVE_FREQUENCY = 392.00;
+    const F4_WAVE_FREQUENCY = 349.23;
+    const Fsharp4_WAVE_FREQUENCY = 369.99;
 
     let canvas = document.getElementById("gl-canvas");
     let gl = WebGLUtils.setupWebGL(canvas);
@@ -196,9 +200,10 @@ window.addEventListener("load", () => {
     }
 
     let c4wave = generateWave(vec3(1.0, 0.796078431372549, 0.4196078431372549),C4_WAVE_FREQUENCY);
-    let mCwave = generateWave(vec3(0.5098039215686274, 0.6666666666666666, 1.0)
-,C4_WAVE_FREQUENCY,329.63,392.00);
-	let fwave = generateWave(vec3(0.7803921568627451, 0.5725490196078431, 0.9176470588235294),349.23,369.99);
+    let mCwave = generateWave(vec3(0.5098039215686274, 0.6666666666666666, 1.0),
+                                C4_WAVE_FREQUENCY, E4_WAVE_FREQUENCY, G4_WAVE_FREQUENCY);
+	let fwave = generateWave(vec3(0.7803921568627451, 0.5725490196078431, 0.9176470588235294),
+                        F4_WAVE_FREQUENCY, Fsharp4_WAVE_FREQUENCY);
     let grid = generateGrid();
 
     let objectsToRender = [];
@@ -208,24 +213,27 @@ window.addEventListener("load", () => {
     objectsToRender.push(c4wave);
     objectsToRender.push(grid);
 
-    // let prevVertices = -1;
-    // let previousFrameTime = 0;
+    let prevVertices = -1;
+    let previousFrameTime = 0;
 
     function render(time) {
         resize(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
         verticesToDraw = (time / (12 * xScale) % 1000) * 10;
-		// Multiple waves go cringe mode
-        //if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
-        //    verticesToDraw = 10000;
-        //}
-        //if (prevVertices >= verticesToDraw) {    //start of next wave
-        //    //TODO parametrize frequency
-        //    for (let i = 0; i < wave.uniforms.init.wavesToCompose.value; i++) {
-        //        wave.uniforms.render.phases.value[i] += 2 * Math.PI * Math.max(12 * xScale, (time - previousFrameTime) / 1000) * C4_WAVE_FREQUENCY;
-        //        wave.uniforms.render.phases.value[i] %= (2 * Math.PI);
-        //    }
-        //}
+        if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
+           verticesToDraw = 10000;
+        }
+        if (prevVertices >= verticesToDraw) {    //start of next wave
+            for (let i = 0; i < wavesToDraw; i++) {
+                let wave = objectsToRender[i];
+                for (let j = 0; j < wave.uniforms.init.wavesToCompose.value; j++) {
+                    wave.uniforms.render.phases.value[j] += 2 * Math.PI *
+                                                        Math.max(12 * xScale,
+                                                        (time - previousFrameTime) / 1000) * wave.uniforms.render.frequencies.value[j];
+                    wave.uniforms.render.phases.value[j] %= (2 * Math.PI);
+                }
+            }
+        }
         previousFrameTime = time;
         prevVertices = verticesToDraw;
         objectsToRender.forEach(object => {
@@ -259,12 +267,16 @@ window.addEventListener("load", () => {
         }
     }
 
+    let wavesToDraw = 1;
+
 	function toggleFromArray(obj, array) {
 		var index = array.indexOf(obj);
 
 		if (index === -1) {
+		    wavesToDraw++;
 			array.unshift(obj);
 		} else {
+		    wavesToDraw--;
 			array.splice(index, 1);
 		}
 	}
