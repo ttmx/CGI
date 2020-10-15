@@ -5,30 +5,42 @@
     <script id="vertex-shader" type="x-shader/x-vertex">
         const float PI = radians(180.0);
         const float MAX_SAMPLES = 10000.0;
-        const float C4_FREQUENCY = 261.63;  //Hz
         const float X_DIVS = 12.0;			//DIV
         const float WAVE_AMPLITUDE = 20.0;  //Volts
         attribute float vSampleTime;
-		uniform float frequency;
+        uniform int wavesToCompose;
+		uniform vec3 frequencies;           //Hz
         uniform float yScale;				//Volts/DIV
         uniform float xScale;				//s/DIV
-        uniform float phase;				//radians
+        uniform vec3 phases;				//radians
 
         float map(float value, float inMin, float inMax, float outMin, float outMax) {
             return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
         }
 
-        float c4Wave(float mappedVSampleTime, float phase, float xScale, float yScale) {
-            return WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * frequency * xScale * X_DIVS + phase);
+        float waveVoltsAt(float mappedVSampleTime) {
+            float volts = 0.0;
+            if (wavesToCompose == 1) {
+                volts = WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * frequencies[0] * xScale * X_DIVS + phases[0]);
+            } else if (wavesToCompose == 2) {
+                for (int i = 0; i < 2; i++) {
+                    volts += WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * frequencies[i] * xScale * X_DIVS + phases[i]);
+                }
+            } else if (wavesToCompose == 3) {
+                for (int i = 0; i < 3; i++) {
+                    volts += WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * frequencies[i] * xScale * X_DIVS + phases[i]);
+                }
+            }
+            return volts;
         }
 
         void main() {
             float mappedVSampleTime = map(vSampleTime, 0.0, MAX_SAMPLES - 1.0, -1.0, 1.0);
             gl_Position = vec4(
-            mappedVSampleTime,
-            c4Wave(mappedVSampleTime, phase, xScale, yScale),
-            0.0,
-            1.0);
+                mappedVSampleTime,
+                waveVoltsAt(mappedVSampleTime),
+                0.0,
+                1.0);
         }
     </script>
     <script id="fragment-shader" type="x-shader/x-fragment">

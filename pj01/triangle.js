@@ -7,6 +7,8 @@ function resize(gl) {
 
 window.addEventListener("load", () => {
 
+    const C4_WAVE_FREQUENCY = 261.63;
+
     let canvas = document.getElementById("gl-canvas");
     let gl = WebGLUtils.setupWebGL(canvas);
     if (!gl) {
@@ -35,7 +37,6 @@ window.addEventListener("load", () => {
     let verticesToDraw = 10000.0;
     let xScale = 0.05;
     let yScale = 0.025;
-    let phase = 0.0;
 
     function generateWave() {
         const endToEndSamples = 10000.0;
@@ -75,14 +76,21 @@ window.addEventListener("load", () => {
                         setter: function (value) {
                             gl.uniform4fv(this.loc, value);
                         }
+                    },
+                    wavesToCompose: {
+                        value: 1,
+                        loc: gl.getUniformLocation(waveProgram, "wavesToCompose"),
+                        setter: function (value) {
+                            gl.uniform1i(this.loc, value);
+                        }
                     }
                 },
                 render: {
-                    frequency: {
-                        value: 261.63,
-                        loc: gl.getUniformLocation(waveProgram, "frequency"),
+                    frequencies: {
+                        value: vec3(C4_WAVE_FREQUENCY, 0.0, 0.0),
+                        loc: gl.getUniformLocation(waveProgram, "frequencies"),
                         setter: function (value) {
-                            gl.uniform1f(this.loc, value);
+                            gl.uniform3fv(this.loc, value);
                         },
                         valueUpdater: function () {
                             return this.value;
@@ -108,14 +116,14 @@ window.addEventListener("load", () => {
                             return yScale;
                         }
                     },
-                    phase: {
-                        value: 0.0,
-                        loc: gl.getUniformLocation(waveProgram, "phase"),
+                    phases: {
+                        value: vec3(0.0, 0.0, 0.0),
+                        loc: gl.getUniformLocation(waveProgram, "phases"),
                         setter: function (value) {
-                            gl.uniform1f(this.loc, value);
+                            gl.uniform3fv(this.loc, value);
                         },
                         valueUpdater: function () {
-                            return phase;
+                            return this.value;
                         }
                     }
                 }
@@ -206,8 +214,10 @@ window.addEventListener("load", () => {
         }
         if (prevVertices >= verticesToDraw) {    //start of next wave
             //TODO parametrize frequency
-            phase += 2 * Math.PI * Math.max(12 * xScale, (time - previousFrameTime) / 1000) * 261.63;
-            phase %= (2 * Math.PI);
+            for (let i = 0; i < wave.uniforms.init.wavesToCompose.value; i++) {
+                wave.uniforms.render.phases.value[i] += 2 * Math.PI * Math.max(12 * xScale, (time - previousFrameTime) / 1000) * C4_WAVE_FREQUENCY;
+                wave.uniforms.render.phases.value[i] %= (2 * Math.PI);
+            }
         }
         previousFrameTime = time;
         prevVertices = verticesToDraw;
