@@ -38,7 +38,7 @@ window.addEventListener("load", () => {
     let xScale = 0.05;
     let yScale = 0.025;
 
-    function generateWave() {
+    function generateWave(color,waveFreq1=0,waveFreq2=0,waveFreq3=0) {
         const endToEndSamples = 10000.0;
         let waveVertices = [];
         for (let i = 0.0; i < endToEndSamples; i++) {
@@ -71,14 +71,14 @@ window.addEventListener("load", () => {
             uniforms: {
                 init: {
                     vColor: {
-                        value: vec4(0.509803922, 0.666666667, 1.0, 1.0),
+                        value: vec4(color, 1.0),
                         loc: gl.getUniformLocation(waveProgram, "vColor"),
                         setter: function (value) {
                             gl.uniform4fv(this.loc, value);
                         }
                     },
                     wavesToCompose: {
-                        value: 1,
+                        value: [waveFreq1,waveFreq2,waveFreq3].reduce((a,b)=>(b>0)+a,0),
                         loc: gl.getUniformLocation(waveProgram, "wavesToCompose"),
                         setter: function (value) {
                             gl.uniform1i(this.loc, value);
@@ -87,7 +87,7 @@ window.addEventListener("load", () => {
                 },
                 render: {
                     frequencies: {
-                        value: vec3(C4_WAVE_FREQUENCY, 0.0, 0.0),
+                        value: vec3(waveFreq1, waveFreq2, waveFreq3),
                         loc: gl.getUniformLocation(waveProgram, "frequencies"),
                         setter: function (value) {
                             gl.uniform3fv(this.loc, value);
@@ -195,30 +195,37 @@ window.addEventListener("load", () => {
         return grid;
     }
 
-    let wave = generateWave();
+    let c4wave = generateWave(vec3(1.0, 0.796078431372549, 0.4196078431372549),C4_WAVE_FREQUENCY);
+    let mCwave = generateWave(vec3(0.5098039215686274, 0.6666666666666666, 1.0)
+,C4_WAVE_FREQUENCY,329.63,392.00);
+	let fwave = generateWave(vec3(0.7803921568627451, 0.5725490196078431, 0.9176470588235294),349.23,369.99);
     let grid = generateGrid();
 
     let objectsToRender = [];
-    objectsToRender.push(wave);
+	let waves = [];
+	waves.push(c4wave);
+	waves.push(mCwave);
+    objectsToRender.push(c4wave);
     objectsToRender.push(grid);
 
-    let prevVertices = -1;
-    let previousFrameTime = 0;
+    // let prevVertices = -1;
+    // let previousFrameTime = 0;
 
     function render(time) {
         resize(gl);
         gl.clear(gl.COLOR_BUFFER_BIT);
         verticesToDraw = (time / (12 * xScale) % 1000) * 10;
-        if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
-            verticesToDraw = 10000;
-        }
-        if (prevVertices >= verticesToDraw) {    //start of next wave
-            //TODO parametrize frequency
-            for (let i = 0; i < wave.uniforms.init.wavesToCompose.value; i++) {
-                wave.uniforms.render.phases.value[i] += 2 * Math.PI * Math.max(12 * xScale, (time - previousFrameTime) / 1000) * C4_WAVE_FREQUENCY;
-                wave.uniforms.render.phases.value[i] %= (2 * Math.PI);
-            }
-        }
+		// Multiple waves go cringe mode
+        //if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
+        //    verticesToDraw = 10000;
+        //}
+        //if (prevVertices >= verticesToDraw) {    //start of next wave
+        //    //TODO parametrize frequency
+        //    for (let i = 0; i < wave.uniforms.init.wavesToCompose.value; i++) {
+        //        wave.uniforms.render.phases.value[i] += 2 * Math.PI * Math.max(12 * xScale, (time - previousFrameTime) / 1000) * C4_WAVE_FREQUENCY;
+        //        wave.uniforms.render.phases.value[i] %= (2 * Math.PI);
+        //    }
+        //}
         previousFrameTime = time;
         prevVertices = verticesToDraw;
         objectsToRender.forEach(object => {
@@ -252,18 +259,31 @@ window.addEventListener("load", () => {
         }
     }
 
-    function toggleButton(id) {
-        switch (id) {
-            case "C4":
-                break;
-            case "MC4":
-                break;
-            case "F4":
-                break;
-            case "merge":
-                break;
-        }
-    }
+	function toggleFromArray(obj, array) {
+		var index = array.indexOf(obj);
+
+		if (index === -1) {
+			array.unshift(obj);
+		} else {
+			array.splice(index, 1);
+		}
+	}
+
+	function toggleButton(id) {
+		switch (id) {
+			case "C4":
+				toggleFromArray(c4wave,objectsToRender);
+				break;
+			case "MC4":
+				toggleFromArray(mCwave,objectsToRender);
+				break;
+			case "F4":
+				toggleFromArray(fwave,objectsToRender);
+				break;
+			case "merge":
+				break;
+		}
+	}
 
     document.getElementById("y-slider").addEventListener("input", (ev) => {
         let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
