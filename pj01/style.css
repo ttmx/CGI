@@ -129,6 +129,8 @@ body {
 
 .checkmenu{
 	margin:0.0em auto;
+	font-family: "mononoki Nerd Font", "Ubuntu mono", "sans-serif";
+	color:#fefefe;
 }
 .checkmenu>div>.checkbox{
 	position:relative;
@@ -151,9 +153,7 @@ body {
 }
 
 .checkmenu>div{
-	color:#fefefe;
 	font-size: 16px;
 	line-height:26px;
 	width:130px;
-	font-family:'Mononoki Nerd Font','Ubuntu',sans-serif;
 }
