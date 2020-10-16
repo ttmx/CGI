@@ -1,7 +1,7 @@
 function resize(gl) {
     if (gl.canvas.width != gl.canvas.clientWidth ||
         gl.canvas.height != gl.canvas.clientHeight) {
-        
+
         gl.canvas.width = gl.canvas.clientWidth;
         gl.canvas.height = gl.canvas.clientHeight;
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -93,13 +93,17 @@ window.addEventListener("load", () => {
     let xScale = 0.05;
     let yScale = 0.025;
 
-    function generateWave(color, waveFreq1 = 0, waveFreq2 = 0, waveFreq3 = 0) {
-        const endToEndSamples = 10000.0;
-        let waveVertices = [];
-        for (let i = 0.0; i < endToEndSamples; i++) {
-            waveVertices.push(i);
-        }
+    const endToEndSamples = 10000.0;
+    let waveVertices = [];
+    for (let i = 0.0; i < endToEndSamples; i++) {
+        waveVertices.push(i);
+    }
+    // Load the data into the GPU
+    let waveBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, waveBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(waveVertices), gl.STATIC_DRAW);
 
+    function generateWave(color, waveFreq1 = 0, waveFreq2 = 0, waveFreq3 = 0) {
         let waveProgram = initShaders(gl, "vertex-shader", "fragment-shader");
         let wave = {
             programInfo: {
@@ -111,7 +115,7 @@ window.addEventListener("load", () => {
                 }
             },
             bufferInfo: {
-                buffer: gl.createBuffer(),
+                buffer: waveBuffer,
                 attribs: {
                     vSampleTime: {
                         loc: gl.getAttribLocation(waveProgram, "vSampleTime"),
@@ -193,9 +197,6 @@ window.addEventListener("load", () => {
                 }
             }
         };
-        // Load the data into the GPU
-        gl.bindBuffer(gl.ARRAY_BUFFER, wave.bufferInfo.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(waveVertices), gl.STATIC_DRAW);
 
         gl.useProgram(waveProgram);
         setUniforms(wave.uniforms.init);
