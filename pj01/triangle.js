@@ -103,8 +103,9 @@ window.addEventListener("load", () => {
     gl.bindBuffer(gl.ARRAY_BUFFER, waveBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(waveVertices), gl.STATIC_DRAW);
 
+    let waveProgram = initShaders(gl, "vertex-shader", "fragment-shader");
+
     function generateWave(color, waveFreq1 = 0, waveFreq2 = 0, waveFreq3 = 0) {
-        let waveProgram = initShaders(gl, "vertex-shader", "fragment-shader");
         let wave = {
             programInfo: {
                 program: waveProgram,
@@ -128,12 +129,15 @@ window.addEventListener("load", () => {
                 }
             },
             uniforms: {
-                init: {
+                render: {
                     vColor: {
                         value: vec4(color, 1.0),
                         loc: gl.getUniformLocation(waveProgram, "vColor"),
                         setter: function (value) {
                             gl.uniform4fv(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return this.value;
                         }
                     },
                     yWavesToCompose: {
@@ -141,6 +145,9 @@ window.addEventListener("load", () => {
                         loc: gl.getUniformLocation(waveProgram, "yWavesToCompose"),
                         setter: function (value) {
                             gl.uniform1i(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return this.value;
                         }
                     },
                     yFrequencies: {
@@ -148,6 +155,9 @@ window.addEventListener("load", () => {
                         loc: gl.getUniformLocation(waveProgram, "yFrequencies"),
                         setter: function (value) {
                             gl.uniform3fv(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return this.value;
                         }
                     },
                     xyMode: {
@@ -155,21 +165,19 @@ window.addEventListener("load", () => {
                         loc: gl.getUniformLocation(waveProgram, "xyMode"),
                         setter: function (value) {
                             gl.uniform1i(this.loc, value);
+                        },
+                        valueUpdater: function () {
+                            return this.value;
                         }
-                    }
-                },
-                render: {},
-                onEvent: {
+                    },
                     xScale: {
                         value: 0.05,
                         loc: gl.getUniformLocation(waveProgram, "xScale"),
                         setter: function () {
                             gl.uniform1f(this.loc, this.value);
                         },
-                        valueUpdater: function (value) {
-                            this.value = value;
-                            gl.useProgram(wave.programInfo.program);
-                            this.setter();
+                        valueUpdater: function () {
+                            return xScale;
                         }
                     },
                     yScale: {
@@ -178,10 +186,8 @@ window.addEventListener("load", () => {
                         setter: function () {
                             gl.uniform1f(this.loc, this.value);
                         },
-                        valueUpdater: function (value) {
-                            this.value = value;
-                            gl.useProgram(wave.programInfo.program);
-                            this.setter();
+                        valueUpdater: function () {
+                            return yScale;
                         }
                     },
                     yPhases: {
@@ -197,12 +203,8 @@ window.addEventListener("load", () => {
                 }
             }
         };
-
-        gl.useProgram(waveProgram);
-        setUniforms(wave.uniforms.init);
-        setUniforms(wave.uniforms.onEvent);
-        return wave;
-    }
+		return wave;
+	}
 
     function generateGrid() {
         let xLength = 12;
@@ -278,50 +280,47 @@ window.addEventListener("load", () => {
     let prevVertices = -1;
     let previousFrameTime = 0;
 
-    function adjustPhases(time) {
-        for (let i = 0; i < wavesToDraw; i++) {
-            gl.useProgram(objectsToRender[i].programInfo.program);
-            let wave = objectsToRender[i];
-            if (xyMode) {
-                for (let j = 0; j < wave.uniforms.init.xWavesToCompose.value; j++) {
-                    wave.uniforms.onEvent.xPhases.value[j] += 2 * Math.PI *
-                        Math.max(12 * xScale,
-                            (time - previousFrameTime) / 1000) * wave.uniforms.init.xFrequencies.value[j];
-                    wave.uniforms.onEvent.xPhases.value[j] %= (2 * Math.PI);
+	function render(time) {
+		resize(gl);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		verticesToDraw = (time / (12 * xScale) % 1000) * 10;
+		if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
+			verticesToDraw = 10000;
+		}
+		if (prevVertices >= verticesToDraw) {    //start of next wave
+			for (let i = 0; i < wavesToDraw; i++) {
+                let waveUniforms = objectsToRender[i].uniforms.render;
+                if (xyMode) {
+                    for (let j = 0; j < waveUniforms.xWavesToCompose.value; j++) {
+                        waveUniforms.xPhases.value[j] += 2 * Math.PI *
+                            Math.max(12 * xScale,
+                                (time - previousFrameTime) / 1000) * waveUniforms.xFrequencies.value[j];
+                        waveUniforms.xPhases.value[j] %= (2 * Math.PI);
+                    }
                 }
-                wave.uniforms.onEvent.xPhases.setter();
+                for (let j = 0; j < waveUniforms.yWavesToCompose.value; j++) {
+                    waveUniforms.yPhases.value[j] += 2 * Math.PI *
+                        Math.max(12 * xScale,
+                            (time - previousFrameTime) / 1000) * waveUniforms.yFrequencies.value[j];
+                    waveUniforms.yPhases.value[j] %= (2 * Math.PI);
+                }
+			}
+		}
+		previousFrameTime = time;
+		prevVertices = verticesToDraw;
+		let lastUsedProgram = null;
+		objectsToRender.forEach(object => {
+            if (lastUsedProgram !== object.programInfo.program) {
+                gl.useProgram(object.programInfo.program);
+                lastUsedProgram = object.programInfo.program;
             }
-            for (let j = 0; j < wave.uniforms.init.yWavesToCompose.value; j++) {
-                wave.uniforms.onEvent.yPhases.value[j] += 2 * Math.PI *
-                    Math.max(12 * xScale,
-                        (time - previousFrameTime) / 1000) * wave.uniforms.init.yFrequencies.value[j];
-                wave.uniforms.onEvent.yPhases.value[j] %= (2 * Math.PI);
-            }
-            wave.uniforms.onEvent.yPhases.setter();
-        }
-    }
-
-    function render(time) {
-        resize(gl);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        verticesToDraw = (time / (12 * xScale) % 1000) * 10;
-        if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
-            verticesToDraw = 10000;
-        }
-        if (prevVertices >= verticesToDraw) {    //start of next wave
-            adjustPhases(time);
-        }
-        previousFrameTime = time;
-        prevVertices = verticesToDraw;
-        objectsToRender.forEach(object => {
-            gl.useProgram(object.programInfo.program);
-            setAttribs(object.bufferInfo);
-            //updateUniforms(object.uniforms.render, time);
-            //setUniforms(object.uniforms.render);
-            object.programInfo.drawCall();
-        });
-        requestAnimFrame(render);
-    }
+			setAttribs(object.bufferInfo);
+			updateUniforms(object.uniforms.render, time);
+			setUniforms(object.uniforms.render);
+			object.programInfo.drawCall();
+		});
+		requestAnimFrame(render);
+	}
 
     function setAttribs(bufferInfo) {
         for (const attribName in bufferInfo.attribs) {
@@ -349,16 +348,14 @@ window.addEventListener("load", () => {
     function toggleFromArray(obj, array) {
         const index = array.indexOf(obj);
 
-        if (index === -1) {
-            wavesToDraw++;
-            array.unshift(obj);
-            obj.uniforms.onEvent.xScale.valueUpdater(xScale);
-            obj.uniforms.onEvent.yScale.valueUpdater(yScale);
-        } else {
-            wavesToDraw--;
-            array.splice(index, 1);
-        }
-    }
+		if (index === -1) {
+			wavesToDraw++;
+			array.unshift(obj);
+		} else {
+			wavesToDraw--;
+			array.splice(index, 1);
+		}
+	}
 
     let xWave = "C4";
     let yWave = false;
@@ -377,26 +374,20 @@ window.addEventListener("load", () => {
         }
     }
 
-    document.getElementById("y-slider").addEventListener("input", (ev) => {
-        let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
-        ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
-        yScale = 1 / volts[ev.target.value] / 4;
-        for (let i = 0; i < wavesToDraw; i++) {
-            objectsToRender[i].uniforms.onEvent.yScale.valueUpdater(yScale);
-        }
-    });
+	document.getElementById("y-slider").addEventListener("input", (ev) => {
+		let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+		ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
+		yScale = 1 / volts[ev.target.value] / 4;
+	});
 
-    document.getElementById("x-slider").addEventListener("input", (ev) => {
-        let seconds = ["0.0001", "0.0002", "0.0005", "0.001", "0.002", "0.005",
-            "0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "1", "2", "5", "10"];
-        let secN = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02,
-            0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
-        ev.target.parentElement.firstElementChild.innerText = "X Scale [" + seconds[ev.target.value] + "s]";
-        xScale = secN[ev.target.value];
-        for (let i = 0; i < wavesToDraw; i++) {
-            objectsToRender[i].uniforms.onEvent.xScale.valueUpdater(xScale);
-        }
-    });
+	document.getElementById("x-slider").addEventListener("input", (ev) => {
+		let seconds = ["0.0001", "0.0002", "0.0005", "0.001", "0.002", "0.005",
+			"0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "1", "2", "5", "10"];
+		let secN = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02,
+			0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
+		ev.target.parentElement.firstElementChild.innerText = "X Scale [" + seconds[ev.target.value] + "s]";
+		xScale = secN[ev.target.value];
+	});
 
     requestAnimFrame(render);
 });
