@@ -8,17 +8,21 @@
         const float X_DIVS = 12.0;			//DIV
         const float WAVE_AMPLITUDE = 20.0;  //Volts
         attribute float vSampleTime;
-        uniform int wavesToCompose;
-		uniform vec3 frequencies;           //Hz
+        uniform int xWavesToCompose;
+        uniform int yWavesToCompose;
+        uniform vec3 xFrequencies;          //Hz
+        uniform vec3 yFrequencies;          //Hz
         uniform float yScale;				//Volts/DIV
         uniform float xScale;				//s/DIV
-        uniform vec3 phases;				//radians
+        uniform vec3 xPhases;				//radians
+        uniform vec3 yPhases;				//radians
+        uniform bool xyMode;
 
         float map(float value, float inMin, float inMax, float outMin, float outMax) {
             return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
         }
 
-        float waveVoltsAt(float mappedVSampleTime) {
+        float waveVoltsAt(float mappedVSampleTime, vec3 frequencies, vec3 phases, int wavesToCompose) {
             float volts = 0.0;
             if (wavesToCompose == 1) {
                 volts = WAVE_AMPLITUDE * yScale * sin(mappedVSampleTime * PI * frequencies[0] * xScale * X_DIVS + phases[0]);
@@ -36,11 +40,19 @@
 
         void main() {
             float mappedVSampleTime = map(vSampleTime, 0.0, MAX_SAMPLES - 1.0, -1.0, 1.0);
-            gl_Position = vec4(
-                mappedVSampleTime,
-                waveVoltsAt(mappedVSampleTime),
-                0.0,
-                1.0);
+            if (!xyMode) {
+                gl_Position = vec4(
+                    mappedVSampleTime,
+                    waveVoltsAt(mappedVSampleTime, yFrequencies, yPhases, yWavesToCompose),
+                    0.0,
+                    1.0);
+            } else {
+                gl_Position = vec4(
+                    waveVoltsAt(mappedVSampleTime, xFrequencies, xPhases, xWavesToCompose),
+                    waveVoltsAt(mappedVSampleTime, yFrequencies, yPhases, yWavesToCompose),
+                    0.0,
+                    1.0);
+            }
         }
     </script>
     <script id="fragment-shader" type="x-shader/x-fragment">

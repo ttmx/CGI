@@ -124,56 +124,67 @@ window.addEventListener("load", () => {
 							gl.uniform4fv(this.loc, value);
 						}
 					},
-					wavesToCompose: {
+					yWavesToCompose: {
 						value: [waveFreq1, waveFreq2, waveFreq3].reduce((a, b) => (b > 0) + a, 0),
-						loc: gl.getUniformLocation(waveProgram, "wavesToCompose"),
+						loc: gl.getUniformLocation(waveProgram, "yWavesToCompose"),
 						setter: function (value) {
 							gl.uniform1i(this.loc, value);
 						}
-					}
+					},
+                    yFrequencies: {
+                        value: vec3(waveFreq1, waveFreq2, waveFreq3),
+                        loc: gl.getUniformLocation(waveProgram, "yFrequencies"),
+                        setter: function (value) {
+                            gl.uniform3fv(this.loc, value);
+                        }
+                    },
+                    xyMode: {
+                        value: false,
+                        loc: gl.getUniformLocation(waveProgram, "xyMode"),
+                        setter: function (value) {
+                            gl.uniform1i(this.loc, value);
+                        }
+                    }
 				},
 				render: {
-					frequencies: {
-						value: vec3(waveFreq1, waveFreq2, waveFreq3),
-						loc: gl.getUniformLocation(waveProgram, "frequencies"),
-						setter: function (value) {
-							gl.uniform3fv(this.loc, value);
-						},
-						valueUpdater: function () {
-							return this.value;
-						}
-					},
-					xScale: {
-						value: 0.05,
-						loc: gl.getUniformLocation(waveProgram, "xScale"),
-						setter: function (value) {
-							gl.uniform1f(this.loc, value);
-						},
-						valueUpdater: function () {
-							return xScale;
-						}
-					},
-					yScale: {
-						value: 0.025,
-						loc: gl.getUniformLocation(waveProgram, "yScale"),
-						setter: function (value) {
-							gl.uniform1f(this.loc, value);
-						},
-						valueUpdater: function () {
-							return yScale;
-						}
-					},
-					phases: {
-						value: vec3(0.0, 0.0, 0.0),
-						loc: gl.getUniformLocation(waveProgram, "phases"),
-						setter: function (value) {
-							gl.uniform3fv(this.loc, value);
-						},
-						valueUpdater: function () {
-							return this.value;
-						}
-					}
-				}
+
+				},
+                onEvent: {
+                    xScale: {
+                        value: 0.05,
+                        loc: gl.getUniformLocation(waveProgram, "xScale"),
+                        setter: function () {
+                            gl.uniform1f(this.loc, this.value);
+                        },
+                        valueUpdater: function (value) {
+                            this.value = value;
+                            gl.useProgram(wave.programInfo.program);
+                            this.setter();
+                        }
+                    },
+                    yScale: {
+                        value: 0.025,
+                        loc: gl.getUniformLocation(waveProgram, "yScale"),
+                        setter: function () {
+                            gl.uniform1f(this.loc, this.value);
+                        },
+                        valueUpdater: function (value) {
+                            this.value = value;
+                            gl.useProgram(wave.programInfo.program);
+                            this.setter();
+                        }
+                    },
+                    yPhases: {
+                        value: vec3(0.0, 0.0, 0.0),
+                        loc: gl.getUniformLocation(waveProgram, "yPhases"),
+                        setter: function () {
+                            gl.uniform3fv(this.loc, this.value);
+                        },
+                        valueUpdater: function () {
+                            return this.value;
+                        }
+                    }
+                }
 			}
 		};
 		// Load the data into the GPU
@@ -182,6 +193,7 @@ window.addEventListener("load", () => {
 
 		gl.useProgram(waveProgram);
 		setUniforms(wave.uniforms.init);
+        setUniforms(wave.uniforms.onEvent);
 		return wave;
 	}
 
@@ -259,7 +271,30 @@ window.addEventListener("load", () => {
 	let prevVertices = -1;
 	let previousFrameTime = 0;
 
-	function render(time) {
+    function adjustPhases(time) {
+        for (let i = 0; i < wavesToDraw; i++) {
+            gl.useProgram(objectsToRender[i].programInfo.program);
+            let wave = objectsToRender[i];
+            if (xyMode) {
+                for (let j = 0; j < wave.uniforms.init.xWavesToCompose.value; j++) {
+                    wave.uniforms.onEvent.xPhases.value[j] += 2 * Math.PI *
+                        Math.max(12 * xScale,
+                            (time - previousFrameTime) / 1000) * wave.uniforms.init.xFrequencies.value[j];
+                    wave.uniforms.onEvent.xPhases.value[j] %= (2 * Math.PI);
+                }
+                wave.uniforms.onEvent.xPhases.setter();
+            }
+            for (let j = 0; j < wave.uniforms.init.yWavesToCompose.value; j++) {
+                wave.uniforms.onEvent.yPhases.value[j] += 2 * Math.PI *
+                    Math.max(12 * xScale,
+                        (time - previousFrameTime) / 1000) * wave.uniforms.init.yFrequencies.value[j];
+                wave.uniforms.onEvent.yPhases.value[j] %= (2 * Math.PI);
+            }
+            wave.uniforms.onEvent.yPhases.setter();
+        }
+    }
+
+    function render(time) {
 		resize(gl);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		verticesToDraw = (time / (12 * xScale) % 1000) * 10;
@@ -267,23 +302,15 @@ window.addEventListener("load", () => {
 			verticesToDraw = 10000;
 		}
 		if (prevVertices >= verticesToDraw) {    //start of next wave
-			for (let i = 0; i < wavesToDraw; i++) {
-				let wave = objectsToRender[i];
-				for (let j = 0; j < wave.uniforms.init.wavesToCompose.value; j++) {
-					wave.uniforms.render.phases.value[j] += 2 * Math.PI *
-						Math.max(12 * xScale,
-							(time - previousFrameTime) / 1000) * wave.uniforms.render.frequencies.value[j];
-					wave.uniforms.render.phases.value[j] %= (2 * Math.PI);
-				}
-			}
+			adjustPhases(time);
 		}
 		previousFrameTime = time;
 		prevVertices = verticesToDraw;
 		objectsToRender.forEach(object => {
 			gl.useProgram(object.programInfo.program);
 			setAttribs(object.bufferInfo);
-			updateUniforms(object.uniforms.render, time);
-			setUniforms(object.uniforms.render);
+			//updateUniforms(object.uniforms.render, time);
+			//setUniforms(object.uniforms.render);
 			object.programInfo.drawCall();
 		});
 		requestAnimFrame(render);
@@ -313,11 +340,13 @@ window.addEventListener("load", () => {
 	let wavesToDraw = 1;
 
 	function toggleFromArray(obj, array) {
-		var index = array.indexOf(obj);
+        const index = array.indexOf(obj);
 
-		if (index === -1) {
+        if (index === -1) {
 			wavesToDraw++;
 			array.unshift(obj);
+            obj.uniforms.onEvent.xScale.valueUpdater(xScale);
+            obj.uniforms.onEvent.yScale.valueUpdater(yScale);
 		} else {
 			wavesToDraw--;
 			array.splice(index, 1);
@@ -344,6 +373,9 @@ window.addEventListener("load", () => {
 		let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
 		ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
 		yScale = 1 / volts[ev.target.value] / 4;
+        for (let i = 0; i < wavesToDraw; i++) {
+            objectsToRender[i].uniforms.onEvent.yScale.valueUpdater(yScale);
+        }
 	});
 
 	document.getElementById("x-slider").addEventListener("input", (ev) => {
@@ -353,7 +385,9 @@ window.addEventListener("load", () => {
 			0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
 		ev.target.parentElement.firstElementChild.innerText = "X Scale [" + seconds[ev.target.value] + "s]";
 		xScale = secN[ev.target.value];
-
+        for (let i = 0; i < wavesToDraw; i++) {
+            objectsToRender[i].uniforms.onEvent.xScale.valueUpdater(xScale);
+        }
 	});
 
 	requestAnimFrame(render);
