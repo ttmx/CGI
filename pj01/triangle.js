@@ -105,8 +105,9 @@ window.addEventListener("load", () => {
 
     let waveProgram = initShaders(gl, "vertex-shader", "fragment-shader");
 
-    function generateWave(color, waveFreq1 = 0, waveFreq2 = 0, waveFreq3 = 0) {
+    function generateWave(name, color, waveFreq1 = 0, waveFreq2 = 0, waveFreq3 = 0) {
         let wave = {
+            name: name,
             programInfo: {
                 program: waveProgram,
                 drawLength: endToEndSamples,
@@ -263,18 +264,18 @@ window.addEventListener("load", () => {
         return grid;
     }
 
-    let c4wave = generateWave(vec3(1.0, 0.796078431372549, 0.4196078431372549), C4_WAVE_FREQUENCY);
-    let mCwave = generateWave(vec3(0.5098039215686274, 0.6666666666666666, 1.0),
-        C4_WAVE_FREQUENCY, E4_WAVE_FREQUENCY, G4_WAVE_FREQUENCY);
-    let fwave = generateWave(vec3(0.7803921568627451, 0.5725490196078431, 0.9176470588235294),
-        F4_WAVE_FREQUENCY, Fsharp4_WAVE_FREQUENCY);
-    let grid = generateGrid();
+    const grid = generateGrid();
+
+    let immutableWavesCache = {
+        c4wave: generateWave("c4wave", vec3(1.0, 0.796078431372549, 0.4196078431372549), C4_WAVE_FREQUENCY),
+        mCwave: generateWave("mCwave", vec3(0.5098039215686274, 0.6666666666666666, 1.0),
+            C4_WAVE_FREQUENCY, E4_WAVE_FREQUENCY, G4_WAVE_FREQUENCY),
+        fwave: generateWave("fwave", vec3(0.7803921568627451, 0.5725490196078431, 0.9176470588235294),
+            F4_WAVE_FREQUENCY, Fsharp4_WAVE_FREQUENCY)
+    }
 
     let objectsToRender = [];
-    let waves = [];
-    waves.push(c4wave);
-    waves.push(mCwave);
-    objectsToRender.push(c4wave);
+    objectsToRender.push(Object.assign({}, immutableWavesCache.c4wave));
     objectsToRender.push(grid);
 
     let prevVertices = -1;
@@ -345,15 +346,15 @@ window.addEventListener("load", () => {
 
     let wavesToDraw = 1;
 
-    function toggleFromArray(obj, array) {
-        const index = array.indexOf(obj);
+    function toggleFromRenderQueue(wave) {
+        const index = objectsToRender.findIndex(object => object.name === wave.name);
 
 		if (index === -1) {
 			wavesToDraw++;
-			array.unshift(obj);
+			objectsToRender.unshift(Object.assign({}, wave));
 		} else {
 			wavesToDraw--;
-			array.splice(index, 1);
+			objectsToRender.splice(index, 1);
 		}
 	}
 
@@ -363,13 +364,13 @@ window.addEventListener("load", () => {
     function toggleButton(id, isX) {
         switch (id) {
             case "C4":
-                toggleFromArray(c4wave, objectsToRender);
+                toggleFromRenderQueue(immutableWavesCache.c4wave);
                 break;
             case "MC4":
-                toggleFromArray(mCwave, objectsToRender);
+                toggleFromRenderQueue(immutableWavesCache.mCwave);
                 break;
             case "F4":
-                toggleFromArray(fwave, objectsToRender);
+                toggleFromRenderQueue(immutableWavesCache.fwave);
                 break;
         }
     }
