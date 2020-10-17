@@ -29,12 +29,12 @@ window.addEventListener("load", () => {
     let lastX = "C4";
 	let lastY = false;
 
+	// Do not try to comprehend this code, I, myself, do not. Writing this code was but a fever dream.
     function addOneToggle(elem) {
         elem.target.classList.toggle("active");
         if (elem.target.classList.contains("active"))
             lastX = elem.target.dataset.opt;
         toggleButton(elem.target.dataset.opt, elem.target.parentElement.parentElement.innerText[0] == "X");
-		updateWaves();
     }
 
     function addToggles(elems) {
@@ -64,9 +64,12 @@ window.addEventListener("load", () => {
 				lastX = elem.target.dataset.opt;
             xyMode = true;
         } else {
-            xyMode = false;
-            if (elem.target.parentElement.parentElement.innerText[0] == "Y")
+            if (elem.target.parentElement.parentElement.innerText[0] == "Y"){
+				xyMode = false;
                 addToggles(toggles);
+			}else{
+				elem.target.classList.toggle("active");
+			}
         }
 		updateWaves();
     }
@@ -89,8 +92,11 @@ window.addEventListener("load", () => {
 		if(xyMode){
 			objectsToRender.splice(0,objectsToRender.length-1);
 			objectsToRender.unshift(generateXYWave(nameToWave(lastX), nameToWave(lastY)));
+			wavesToDraw = 1;
 		}else{
+			objectsToRender.splice(0,objectsToRender.length-1);
 			toggleButton(lastX);
+			wavesToDraw = 1;
 		}
 	}
 
