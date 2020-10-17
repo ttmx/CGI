@@ -25,13 +25,16 @@ window.addEventListener("load", () => {
     resize(gl);
 
     let toggles = document.getElementsByClassName("toggle");
+    let xyMode = false;
+    let lastX = "C4";
+	let lastY = false;
 
     function addOneToggle(elem) {
         elem.target.classList.toggle("active");
         if (elem.target.classList.contains("active"))
             lastX = elem.target.dataset.opt;
         toggleButton(elem.target.dataset.opt, elem.target.parentElement.parentElement.innerText[0] == "X");
-
+		updateWaves();
     }
 
     function addToggles(elems) {
@@ -43,8 +46,6 @@ window.addEventListener("load", () => {
     addToggles(toggles);
 
 
-    let xyMode = false;
-    let lastX = "C4";
 
     function addOneRadio(elem) {
         let wasActive = elem.target.classList.contains("active");
@@ -56,13 +57,18 @@ window.addEventListener("load", () => {
         }
         if (!wasActive) {
             elem.target.classList.toggle("active");
-            addRadios(toggles);
+            if (elem.target.parentElement.parentElement.innerText[0] == "Y"){
+				addRadios(toggles);
+				lastY = elem.target.dataset.opt;
+			}else
+				lastX = elem.target.dataset.opt;
             xyMode = true;
         } else {
             xyMode = false;
             if (elem.target.parentElement.parentElement.innerText[0] == "Y")
                 addToggles(toggles);
         }
+		updateWaves();
     }
 
     let radios = document.getElementsByClassName("radio");
@@ -78,6 +84,29 @@ window.addEventListener("load", () => {
     }
 
     addRadios(radios);
+
+	function updateWaves(){
+		if(xyMode){
+			objectsToRender.splice(0,objectsToRender.length-1);
+			objectsToRender.unshift(generateXYWave(nameToWave(lastX), nameToWave(lastY)));
+		}else{
+			toggleButton(lastX);
+		}
+	}
+
+	function nameToWave(string){
+		if (string[0] == "y")
+			string = string.slice(1,string.length);
+
+        switch (string) {
+            case "C4":
+				return immutableWavesCache.c4wave;
+            case "MC4":
+				return immutableWavesCache.mCwave;
+            case "F4":
+				return immutableWavesCache.fwave;
+        }
+	}
 
 
     window.addEventListener("resize", () => {
@@ -382,10 +411,7 @@ window.addEventListener("load", () => {
 		}
 	}
 
-    let xWave = "C4";
-    let yWave = false;
-
-    function toggleButton(id, isX) {
+    function toggleButton(id) {
         switch (id) {
             case "C4":
                 toggleFromRenderQueue(immutableWavesCache.c4wave);
