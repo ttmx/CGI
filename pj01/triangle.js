@@ -91,7 +91,7 @@ window.addEventListener("load", () => {
 
     let verticesToDraw = 10000.0;
     let xScale = 0.05;
-    let yScale = 0.025;
+    let yScale = 10.0;
 
     const endToEndSamples = 10000.0;
     let waveVertices = [];
@@ -200,12 +200,34 @@ window.addEventListener("load", () => {
                         valueUpdater: function () {
                             return this.value;
                         }
+                    },
+                    xyMode: {
+                        value: false,
+                        loc: gl.getUniformLocation(waveProgram, "xyMode"),
+                        setter: function () {
+                            gl.uniform1i(this.loc, this.value);
+                        },
+                        valueUpdater: function () {
+                            return xyMode;
+                        }
                     }
                 }
             }
         };
 		return wave;
 	}
+
+	function generateXYWave(xWave, yWave) {
+        let wave = Object.assign({}, yWave);
+        wave.name = xWave.name + yWave.name;
+        wave.uniforms.render.xWavesToCompose = Object.assign({}, xWave.uniforms.render.yWavesToCompose);
+        wave.uniforms.render.xFrequencies = Object.assign({}, xWave.uniforms.render.yFrequencies);
+        wave.uniforms.render.xPhases = Object.assign({}, xWave.uniforms.render.yPhases);
+        wave.uniforms.render.xWavesToCompose.loc = gl.getUniformLocation(wave.programInfo.program, "xWavesToCompose");
+        wave.uniforms.render.xFrequencies.loc = gl.getUniformLocation(wave.programInfo.program, "xFrequencies");
+        wave.uniforms.render.xPhases.loc = gl.getUniformLocation(wave.programInfo.program, "xPhases");
+        return wave;
+    }
 
     function generateGrid() {
         let xLength = 12;
@@ -276,6 +298,8 @@ window.addEventListener("load", () => {
 
     let objectsToRender = [];
     objectsToRender.push(Object.assign({}, immutableWavesCache.c4wave));
+    //objectsToRender.push(generateXYWave(immutableWavesCache.c4wave, immutableWavesCache.c4wave));
+    //xyMode = true;
     objectsToRender.push(grid);
 
     let prevVertices = -1;
@@ -378,7 +402,7 @@ window.addEventListener("load", () => {
 	document.getElementById("y-slider").addEventListener("input", (ev) => {
 		let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
 		ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
-		yScale = 1 / volts[ev.target.value] / 4;
+		yScale = volts[ev.target.value];
 	});
 
 	document.getElementById("x-slider").addEventListener("input", (ev) => {
