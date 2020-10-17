@@ -127,6 +127,8 @@ window.addEventListener("load", () => {
     let verticesToDraw = 10000.0;
     let xScale = 0.05;
     let yScale = 10.0;
+    let horizontalDisplacement = 0.0;
+    let verticalDisplacement = 0.0;
 
     const endToEndSamples = 10000.0;
     let waveVertices = [];
@@ -234,6 +236,26 @@ window.addEventListener("load", () => {
                         },
                         valueUpdater: function () {
                             return this.value;
+                        }
+                    },
+                    horizontalDisplacement: {
+                        value: 0.0,
+                        loc: gl.getUniformLocation(waveProgram, "horizontalDisplacement"),
+                        setter: function () {
+                            gl.uniform1f(this.loc, this.value);
+                        },
+                        valueUpdater: function () {
+                            return horizontalDisplacement;
+                        }
+                    },
+                    verticalDisplacement: {
+                        value: 0.0,
+                        loc: gl.getUniformLocation(waveProgram, "verticalDisplacement"),
+                        setter: function () {
+                            gl.uniform1f(this.loc, this.value);
+                        },
+                        valueUpdater: function () {
+                            return verticalDisplacement;
                         }
                     },
                     xyMode: {
@@ -445,6 +467,16 @@ window.addEventListener("load", () => {
 		ev.target.parentElement.firstElementChild.innerText = "X Scale [" + seconds[ev.target.value] + "s]";
 		xScale = secN[ev.target.value];
 	});
+
+    document.getElementById("y-slide").addEventListener("input", (ev) => {
+        ev.target.parentElement.firstElementChild.innerText = "Y Slide - " + ev.target.value;
+        verticalDisplacement = ev.target.value;
+    });
+
+    document.getElementById("x-slide").addEventListener("input", (ev) => {
+        ev.target.parentElement.firstElementChild.innerText = "X Slide - " + ev.target.value;
+        horizontalDisplacement = ev.target.value;
+    });
 
     requestAnimFrame(render);
 });

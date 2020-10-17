@@ -18,6 +18,8 @@
         uniform vec3 xPhases;				//radians
         uniform vec3 yPhases;				//radians
         uniform bool xyMode;
+        uniform float horizontalDisplacement;
+        uniform float verticalDisplacement;
 
         float map(float value, float inMin, float inMax, float outMin, float outMax) {
             return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
@@ -26,14 +28,14 @@
         float waveVoltsAt(float mappedVSampleTime, vec3 frequencies, vec3 phases, int wavesToCompose, float voltDivs) {
             float volts = 0.0;
             if (wavesToCompose == 1) {
-                volts = WAVE_AMPLITUDE * (1.0 / yScale / (voltDivs / 2.0) ) * sin(mappedVSampleTime * PI * frequencies[0] * xScale * X_DIVS + phases[0]);
+                volts = WAVE_AMPLITUDE * (1.0 / yScale / (voltDivs / 2.0) ) * sin((mappedVSampleTime + horizontalDisplacement) * PI * frequencies[0] * xScale * X_DIVS + phases[0]);
             } else if (wavesToCompose == 2) {
                 for (int i = 0; i < 2; i++) {
-                    volts += WAVE_AMPLITUDE * (1.0 / yScale / (voltDivs / 2.0) ) * sin(mappedVSampleTime * PI * frequencies[i] * xScale * X_DIVS + phases[i]);
+                    volts += WAVE_AMPLITUDE * (1.0 / yScale / (voltDivs / 2.0) ) * sin((mappedVSampleTime + horizontalDisplacement) * PI * frequencies[i] * xScale * X_DIVS + phases[i]);
                 }
             } else if (wavesToCompose == 3) {
                 for (int i = 0; i < 3; i++) {
-                    volts += WAVE_AMPLITUDE * (1.0 / yScale / (voltDivs / 2.0) ) * sin(mappedVSampleTime * PI * frequencies[i] * xScale * X_DIVS + phases[i]);
+                    volts += WAVE_AMPLITUDE * (1.0 / yScale / (voltDivs / 2.0) ) * sin((mappedVSampleTime + horizontalDisplacement) * PI * frequencies[i] * xScale * X_DIVS + phases[i]);
                 }
             }
             return volts;
@@ -44,13 +46,13 @@
             if (!xyMode) {
                 gl_Position = vec4(
                     mappedVSampleTime,
-                    waveVoltsAt(mappedVSampleTime, yFrequencies, yPhases, yWavesToCompose, VOLT_DIVS),
+                    verticalDisplacement + waveVoltsAt(mappedVSampleTime, yFrequencies, yPhases, yWavesToCompose, VOLT_DIVS),
                     0.0,
                     1.0);
             } else {
                 gl_Position = vec4(
                     waveVoltsAt(mappedVSampleTime, xFrequencies, xPhases, xWavesToCompose, X_DIVS),
-                    waveVoltsAt(mappedVSampleTime, yFrequencies, yPhases, yWavesToCompose, VOLT_DIVS),
+                    verticalDisplacement + waveVoltsAt(mappedVSampleTime, yFrequencies, yPhases, yWavesToCompose, VOLT_DIVS),
                     0.0,
                     1.0);
             }
@@ -121,11 +123,11 @@
         <div class="optmenu">
             <div class="slider-container">
                 <div> X Slide </div>
-                <input id="x-slide" type="range" class="slider" min="0" max="10" value="8" data-opt="xScale">
+                <input id="x-slide" type="range" class="slider" min="-10" max="10" value="0" step="0.1">
             </div>
             <div class="slider-container">
                 <div> Y Slide </div>
-                <input id="y-slide" type="range" class="slider" min="0" max="10" value="6" data-opt="yScale">
+                <input id="y-slide" type="range" class="slider" min="-10" max="10" value="0" step="0.1">
             </div>
         </div>
     </div>
