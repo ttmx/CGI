@@ -198,16 +198,6 @@ window.addEventListener("load", () => {
                             return this.value;
                         }
                     },
-                    xyMode: {
-                        value: false,
-                        loc: gl.getUniformLocation(waveProgram, "xyMode"),
-                        setter: function (value) {
-                            gl.uniform1i(this.loc, value);
-                        },
-                        valueUpdater: function () {
-                            return this.value;
-                        }
-                    },
                     xScale: {
                         value: 0.05,
                         loc: gl.getUniformLocation(waveProgram, "xScale"),
