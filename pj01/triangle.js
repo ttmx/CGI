@@ -8,7 +8,6 @@ function resize(gl) {
     }
 }
 
-
 window.addEventListener("load", () => {
 
     const C4_WAVE_FREQUENCY = 261.63;
@@ -27,9 +26,9 @@ window.addEventListener("load", () => {
     let toggles = document.getElementsByClassName("toggle");
     let xyMode = false;
     let lastX = "C4";
-	let lastY = false;
+    let lastY = false;
 
-	// Do not try to comprehend this code, I, myself, do not. Writing this code was but a fever dream.
+    // Do not try to comprehend this code, I, myself, do not. Writing this code was but a fever dream.
     function addOneToggle(elem) {
         elem.target.classList.toggle("active");
         if (elem.target.classList.contains("active"))
@@ -46,7 +45,6 @@ window.addEventListener("load", () => {
     addToggles(toggles);
 
 
-
     function addOneRadio(elem) {
         let wasActive = elem.target.classList.contains("active");
         for (rad of elem.target.parentElement.parentElement.getElementsByClassName("active")) {
@@ -57,21 +55,21 @@ window.addEventListener("load", () => {
         }
         if (!wasActive) {
             elem.target.classList.toggle("active");
-            if (elem.target.parentElement.parentElement.innerText[0] == "Y"){
-				addRadios(toggles);
-				lastY = elem.target.dataset.opt;
-			}else
-				lastX = elem.target.dataset.opt;
+            if (elem.target.parentElement.parentElement.innerText[0] == "Y") {
+                addRadios(toggles);
+                lastY = elem.target.dataset.opt;
+            } else
+                lastX = elem.target.dataset.opt;
             xyMode = true;
         } else {
-            if (elem.target.parentElement.parentElement.innerText[0] == "Y"){
-				xyMode = false;
+            if (elem.target.parentElement.parentElement.innerText[0] == "Y") {
+                xyMode = false;
                 addToggles(toggles);
-			}else{
-				elem.target.classList.toggle("active");
-			}
+            } else {
+                elem.target.classList.toggle("active");
+            }
         }
-		updateWaves();
+        updateWaves();
     }
 
     let radios = document.getElementsByClassName("radio");
@@ -88,36 +86,31 @@ window.addEventListener("load", () => {
 
     addRadios(radios);
 
-	function updateWaves(){
-		if(xyMode){
-			objectsToRender.splice(0,objectsToRender.length-1);
-			objectsToRender.unshift(generateXYWave(nameToWave(lastX), nameToWave(lastY)));
-			wavesToDraw = 1;
-		}else{
-			objectsToRender.splice(0,objectsToRender.length-1);
-			toggleButton(lastX);
-			wavesToDraw = 1;
-		}
-	}
+    function updateWaves() {
+        if (xyMode) {
+            objectsToRender.splice(0, objectsToRender.length - 1);
+            objectsToRender.unshift(generateXYWave(nameToWave(lastX), nameToWave(lastY)));
+            wavesToDraw = 1;
+        } else {
+            objectsToRender.splice(0, objectsToRender.length - 1);
+            toggleButton(lastX);
+            wavesToDraw = 1;
+        }
+    }
 
-	function nameToWave(string){
-		if (string[0] == "y")
-			string = string.slice(1,string.length);
+    function nameToWave(string) {
+        if (string[0] == "y")
+            string = string.slice(1, string.length);
 
         switch (string) {
             case "C4":
-				return immutableWavesCache.c4wave;
+                return immutableWavesCache.c4wave;
             case "MC4":
-				return immutableWavesCache.mCwave;
+                return immutableWavesCache.mCwave;
             case "F4":
-				return immutableWavesCache.fwave;
+                return immutableWavesCache.fwave;
         }
-	}
-
-
-    window.addEventListener("resize", () => {
-        resize(gl);
-    });
+    }
 
     // Configure WebGL
     gl.clearColor(0.160784, 0.176471, 0.243137, 1.0);
@@ -261,10 +254,10 @@ window.addEventListener("load", () => {
                 }
             }
         };
-		return wave;
-	}
+        return wave;
+    }
 
-	function generateXYWave(xWave, yWave) {
+    function generateXYWave(xWave, yWave) {
         let wave = Object.assign({}, yWave);
         wave.name = xWave.name + yWave.name;
         wave.uniforms.render.xWavesToCompose = Object.assign({}, xWave.uniforms.render.yWavesToCompose);
@@ -345,22 +338,20 @@ window.addEventListener("load", () => {
 
     let objectsToRender = [];
     objectsToRender.push(Object.assign({}, immutableWavesCache.c4wave));
-    //objectsToRender.push(generateXYWave(immutableWavesCache.c4wave, immutableWavesCache.c4wave));
-    //xyMode = true;
     objectsToRender.push(grid);
 
     let prevVertices = -1;
     let previousFrameTime = 0;
 
-	function render(time) {
-		resize(gl);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		verticesToDraw = (time / (12 * xScale) % 1000) * 10;
-		if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
-			verticesToDraw = 10000;
-		}
-		if (prevVertices >= verticesToDraw) {    //start of next wave
-			for (let i = 0; i < wavesToDraw; i++) {
+    function render(time) {
+        resize(gl);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        verticesToDraw = (time / (12 * xScale) % 1000) * 10;
+        if (10000 - verticesToDraw < ((time - previousFrameTime) / (12 * xScale) % 1000) * 10) {
+            verticesToDraw = 10000;
+        }
+        if (prevVertices >= verticesToDraw) {    //start of next wave
+            for (let i = 0; i < wavesToDraw; i++) {
                 let waveUniforms = objectsToRender[i].uniforms.render;
                 if (xyMode) {
                     for (let j = 0; j < waveUniforms.xWavesToCompose.value; j++) {
@@ -376,23 +367,23 @@ window.addEventListener("load", () => {
                             (time - previousFrameTime) / 1000) * waveUniforms.yFrequencies.value[j];
                     waveUniforms.yPhases.value[j] %= (2 * Math.PI);
                 }
-			}
-		}
-		previousFrameTime = time;
-		prevVertices = verticesToDraw;
-		let lastUsedProgram = null;
-		objectsToRender.forEach(object => {
+            }
+        }
+        previousFrameTime = time;
+        prevVertices = verticesToDraw;
+        let lastUsedProgram = null;
+        objectsToRender.forEach(object => {
             if (lastUsedProgram !== object.programInfo.program) {
                 gl.useProgram(object.programInfo.program);
                 lastUsedProgram = object.programInfo.program;
             }
-			setAttribs(object.bufferInfo);
-			updateUniforms(object.uniforms.render, time);
-			setUniforms(object.uniforms.render);
-			object.programInfo.drawCall();
-		});
-		requestAnimFrame(render);
-	}
+            setAttribs(object.bufferInfo);
+            updateUniforms(object.uniforms.render, time);
+            setUniforms(object.uniforms.render);
+            object.programInfo.drawCall();
+        });
+        requestAnimFrame(render);
+    }
 
     function setAttribs(bufferInfo) {
         for (const attribName in bufferInfo.attribs) {
@@ -420,14 +411,14 @@ window.addEventListener("load", () => {
     function toggleFromRenderQueue(wave) {
         const index = objectsToRender.findIndex(object => object.name === wave.name);
 
-		if (index === -1) {
-			wavesToDraw++;
-			objectsToRender.unshift(Object.assign({}, wave));
-		} else {
-			wavesToDraw--;
-			objectsToRender.splice(index, 1);
-		}
-	}
+        if (index === -1) {
+            wavesToDraw++;
+            objectsToRender.unshift(Object.assign({}, wave));
+        } else {
+            wavesToDraw--;
+            objectsToRender.splice(index, 1);
+        }
+    }
 
     function toggleButton(id) {
         switch (id) {
@@ -443,20 +434,20 @@ window.addEventListener("load", () => {
         }
     }
 
-	document.getElementById("y-slider").addEventListener("input", (ev) => {
-		let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
-		ev.target.parentElement.firstElementChild.innerText = "Y Scale [" + volts[ev.target.value] + "V]";
-		yScale = volts[ev.target.value];
-	});
+    document.getElementById("y-slider").addEventListener("input", (ev) => {
+        let volts = [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+        ev.target.parentElement.firstElementChild.innerText = "Amplitude Scale [" + volts[ev.target.value] + "V]";
+        yScale = volts[ev.target.value];
+    });
 
-	document.getElementById("x-slider").addEventListener("input", (ev) => {
-		let seconds = ["0.0001", "0.0002", "0.0005", "0.001", "0.002", "0.005",
-			"0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "1", "2", "5", "10"];
-		let secN = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02,
-			0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
-		ev.target.parentElement.firstElementChild.innerText = "X Scale [" + seconds[ev.target.value] + "s]";
-		xScale = secN[ev.target.value];
-	});
+    document.getElementById("x-slider").addEventListener("input", (ev) => {
+        let seconds = ["0.0001", "0.0002", "0.0005", "0.001", "0.002", "0.005",
+            "0.01", "0.02", "0.05", "0.1", "0.2", "0.5", "1", "2", "5", "10"];
+        let secN = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02,
+            0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
+        ev.target.parentElement.firstElementChild.innerText = "Time Scale [" + seconds[ev.target.value] + "s]";
+        xScale = secN[ev.target.value];
+    });
 
     document.getElementById("y-slide").addEventListener("input", (ev) => {
         ev.target.parentElement.firstElementChild.innerText = "Y Slide - " + ev.target.value;
