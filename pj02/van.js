@@ -25,6 +25,7 @@ var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
 
 var wheelAngle = 0; //degrees
+var antennaRotation = 0; //degrees
 
 // Stack related operations
 function pushMatrix() {
@@ -125,6 +126,7 @@ function drawVan() {
 
     function drawAntenna() {
         pushMatrix();
+            multRotationY(antennaRotation);
             pushMatrix();
                 multScale(20, 50, 20);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
@@ -279,8 +281,12 @@ window.onkeydown = (key) => {
         case 'k':
             break;
         case 'j':
+            antennaRotation -= 5;
+            antennaRotation = antennaRotation % 360;
             break;
         case 'l':
+            antennaRotation += 5;
+            antennaRotation = antennaRotation % 360;
             break;
         case '0':
             eye = [200,200, 700];
