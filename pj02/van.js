@@ -19,7 +19,7 @@ const WEIGHT = 3000; // kg
 const GRAVITY = 9.8; // m/s²
 const ROLLING_RESISTANCE = 0.01; // Newton
 
-var torque = 0; //???
+var torque = 0; // Newtons*meter
 var rotation = 0; // angle
 var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
