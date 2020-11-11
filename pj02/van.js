@@ -19,7 +19,7 @@ const WEIGHT = 3000; // kg
 const GRAVITY = 9.8; // m/s²
 const ROLLING_RESISTANCE = 0.01; // Newton
 
-var enginePower = 0; //???
+var torque = 0; //???
 var rotation = 0; // angle
 var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
@@ -66,16 +66,30 @@ function resize(gl) {
 
 
 // Physics
+//Newtons
 function drag(){
-	return FRONT_AREA * DRAG_COEF * actualSpeed * actualSpeed * AIR_DENSITY/2;
+	return FRONT_AREA * DRAG_COEF * actualSpeed * Math.abs(actualSpeed) * AIR_DENSITY/2;
 }
 
+//Newtons
 function rollingResistance(){
-	return WEIGHT * GRAVITY * ROLLING_RESISTANCE;
+	return WEIGHT * GRAVITY * ROLLING_RESISTANCE*Math.abs(actualSpeed)/(actualSpeed!= 0)? actualSpeed :1;
 }
 
+//Newtons
+function traction(){
+	return torque/(WHEEL_SIZE/100/2);
+}
+
+//Newtons
+function force(){
+	return traction() - drag() - rollingResistance();
+}
+
+
+//m/s²
 function accel(){
-	return (enginePower - drag())/WEIGHT;
+	return force()/WEIGHT;
 }
 
 
@@ -194,9 +208,8 @@ function render(time) {
 	}
 	actualSpeed += accel()*(time-lastTick)/1000;
 	rotation += (actualSpeed/(WHEEL_SIZE*Math.PI/100)*360)*(time-lastTick)/1000;
-	enginePower -= rollingResistance()*(time-lastTick)/1000;
-	if (enginePower < 0){
-		enginePower = 0;
+	if (torque < 0){
+		torque = 0;
 	}
 	lastTick = time;
     requestAnimationFrame(render);
@@ -216,13 +229,17 @@ function render(time) {
 window.onkeydown = (key) => {
     switch (key.key) {
         case 'w':
-			enginePower += 500;
+			torque += 500;
+			if (torque > 5000) torque = 5000;
             break;
         case 'a':
             break;
         case 's':
-			enginePower -= 1000;
-			if (enginePower < 0) enginePower = 0;
+			torque -= 1000;
+			if (torque < 0) torque = 0;
+			actualSpeed -= 5/30; /* 30 was what I found to be key repeat time in hz,
+				so this gives me about 5m/s² decellaration */
+			if (actualSpeed < 0) actualSpeed = 0;
             break;
         case 'd':
             break;
