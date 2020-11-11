@@ -25,7 +25,8 @@ var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
 
 var wheelAngle = 0; //degrees
-var antennaRotation = 0; //degrees
+var antennaRotation = -60; //degrees
+var antennaPivot = -60; //degrees
 
 // Stack related operations
 function pushMatrix() {
@@ -140,9 +141,8 @@ function drawVan() {
                     sphereDraw(gl, program);
                 popMatrix();
                 pushMatrix();
+                    multRotationZ(antennaPivot);
                     pushMatrix();
-                        multRotationZ(-60);
-                        multRotationX(-60);
                         multTranslation(0, 50, 0);
 						multScale(20, 100, 20);
 						gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
@@ -213,7 +213,7 @@ function drawVan() {
         cubeDraw(gl, program);
     popMatrix();
     pushMatrix();
-        multTranslation(0, 128, 0);
+        multTranslation(0, 153, 0);
         gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
         drawAntenna();
     popMatrix();
@@ -277,8 +277,10 @@ window.onkeydown = (key) => {
             }
             break;
         case 'i':
+            antennaPivot = Math.min(antennaPivot + 5, 60);
             break;
         case 'k':
+            antennaPivot = Math.max(antennaPivot - 5, -100);
             break;
         case 'j':
             antennaRotation -= 5;
