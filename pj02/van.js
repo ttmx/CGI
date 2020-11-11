@@ -7,6 +7,7 @@ var mProjectionLoc, mModelViewLoc;
 
 var matrixStack = [];
 var modelView;
+var eye = [200,200,700];
 
 // Stack related operations
 function pushMatrix() {
@@ -163,9 +164,42 @@ function render(time) {
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
 
-    modelView = lookAt([200,200,VP_DISTANCE], [0,0,0], [0,1,0]);
+    modelView = lookAt(eye, [0,0,0], [0,1,0]);
 
     drawVan();
 }
 
+
+window.onkeydown = (key) => {
+    switch (key.key) {
+        case 'w':
+            break;
+        case 'a':
+            break;
+        case 's':
+            break;
+        case 'd':
+            break;
+        case 'i':
+            break;
+        case 'k':
+            break;
+        case 'j':
+            break;
+        case 'l':
+            break;
+        case '0':
+            eye = [200,200, 700];
+            break;
+        case '1':
+            eye = [0,VP_DISTANCE,1];
+            break;
+        case '2':
+            eye = [0,0,VP_DISTANCE];
+            break;
+        case '3':
+            eye = [VP_DISTANCE,0,0];
+            break;
+    }
+}
 
