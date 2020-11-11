@@ -68,7 +68,7 @@ function resize(gl) {
 // Physics
 //Newtons
 function drag(){
-	return FRONT_AREA * DRAG_COEF * actualSpeed * Math.abs(actualSpeed) * AIR_DENSITY/2;
+	return -1*FRONT_AREA * DRAG_COEF * actualSpeed * Math.abs(actualSpeed) * AIR_DENSITY/2;
 }
 
 //Newtons
@@ -82,14 +82,14 @@ function traction(){
 }
 
 //Newtons
-function force(){
-	return traction() - drag() - rollingResistance();
+function engineForce(){
+	return traction() + drag() - rollingResistance();
 }
 
 
 //m/s²
 function accel(){
-	return force()/WEIGHT;
+	return engineForce()/WEIGHT;
 }
 
 
@@ -106,6 +106,7 @@ window.onload = function() {
     sphereInit(gl);
     cylinderInit(gl);
     cubeInit(gl);
+	paraboloidInit(gl);
 
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
@@ -138,10 +139,13 @@ function drawVan() {
                         multScale(20, 20, 50);
                         gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                         cylinderDraw(gl, program);
+                    pushMatrix();
+						multTranslation(0,1,0);
+                        multScale(4, 1, 4);
+                        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+                        paraboloidDraw(gl, program);
                     popMatrix();
-                    // pushMatrix();
-                    //     plateDraw(gl, program);
-                    // popMatrix();
+                    popMatrix();
                 popMatrix();
             popMatrix();
         popMatrix();
@@ -206,11 +210,11 @@ function render(time) {
 		lastTick = 0;
 		time = 0;
 	}
-	actualSpeed += accel()*(time-lastTick)/1000;
+
+	actualSpeed += ((accel())*(time-lastTick)/1000);
 	rotation += (actualSpeed/(WHEEL_SIZE*Math.PI/100)*360)*(time-lastTick)/1000;
-	if (torque < 0){
-		torque = 0;
-	}
+	torque -= torque*0.2*(time-lastTick)/1000;
+
 	lastTick = time;
     requestAnimationFrame(render);
     resize(gl);
@@ -229,16 +233,16 @@ function render(time) {
 window.onkeydown = (key) => {
     switch (key.key) {
         case 'w':
-			torque += 500;
+			torque += 300;
 			if (torque > 5000) torque = 5000;
             break;
         case 'a':
             break;
         case 's':
-			torque -= 1000;
+			torque -= 600;
 			if (torque < 0) torque = 0;
-			actualSpeed -= 5/30; /* 30 was what I found to be key repeat time in hz,
-				so this gives me about 5m/s² decellaration */
+			actualSpeed -= 10/30; /* 30 was what I found to be key repeat time in hz,
+				so this gives me about 10m/s² decellaration */
 			if (actualSpeed < 0) actualSpeed = 0;
             break;
         case 'd':
@@ -263,6 +267,12 @@ window.onkeydown = (key) => {
         case '3':
             eye = [VP_DISTANCE,0,0];
             break;
+        case '+':
+			VP_DISTANCE -=10;
+			break;
+        case '-':
+			VP_DISTANCE +=10;
+			break;
     }
 }
 
