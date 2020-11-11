@@ -279,7 +279,7 @@ window.onkeydown = (key) => {
             }
             break;
         case 'a':
-            if (actualSpeed < 0) {
+            if (actualSpeed <= 0) {
                 wheelAngle = Math.min(wheelAngle + 5, 45);
             }
             break;
@@ -291,7 +291,7 @@ window.onkeydown = (key) => {
 			if (actualSpeed < 0) actualSpeed = 0;
             break;
         case 'd':
-            if (actualSpeed < 0) {
+            if (actualSpeed <= 0) {
                 wheelAngle = Math.max(wheelAngle - 5, -45);
             }
             break;
