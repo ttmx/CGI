@@ -21,11 +21,11 @@ function popMatrix() {
 function multMatrix(m) {
     modelView = mult(modelView, m);
 }
-function multTranslation(t) {
-    modelView = mult(modelView, translate(t));
+function multTranslation(x, y, z) {
+    modelView = mult(modelView, translate(x, y, z));
 }
-function multScale(s) {
-    modelView = mult(modelView, scalem(s));
+function multScale(x, y, z) {
+    modelView = mult(modelView, scalem(x, y, z));
 }
 function multRotationX(angle) {
     modelView = mult(modelView, rotateX(angle));
@@ -74,11 +74,23 @@ function drawVan() {
 
     function drawAntenna() {
         pushMatrix();
-            cylinderDraw(gl, program);
             pushMatrix();
-                sphereDraw(gl, program);
+                multScale(20, 20, 50);
+                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+                cylinderDraw(gl, program);
+            popMatrix();
+            pushMatrix();
+                pushMatrix()
+                    multScale(30, 30, 30);
+                    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+                    sphereDraw(gl, program);
+                popMatrix();
                 pushMatrix();
-                    cylinderDraw(gl, program);
+                    pushMatrix();
+                        multScale(20, 20, 50);
+                        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+                        cylinderDraw(gl, program);
+                    popMatrix();
                     // pushMatrix();
                     //     plateDraw(gl, program);
                     // popMatrix();
@@ -91,12 +103,23 @@ function drawVan() {
 
         function drawAxle() {
             pushMatrix();
+                multTranslation(0, 0, 135);
+                multRotationX(90);
+                multScale(60, 30, 60);
+                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
             pushMatrix();
+                multRotationX(90);
+                multScale(30, 270, 30);
+                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
             pushMatrix();
+                multTranslation(0, 0, -135);
+                multRotationX(-90);
+                multScale(60, 30, 60);
+                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
         }
@@ -105,22 +128,28 @@ function drawVan() {
             drawAxle();
         popMatrix();
         pushMatrix();
+            multTranslation(300, 0, 0);
             drawAxle();
         popMatrix();
     }
 
     pushMatrix();
+        multScale(512, 256, 256);
+        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
         cubeDraw(gl, program);
     popMatrix();
     pushMatrix();
+        multTranslation(0, 128, 0);
+        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
         drawAntenna();
     popMatrix();
     pushMatrix();
+        multTranslation(-150, -115, 0);
         drawChassis();
     popMatrix();
 }
 
-var VP_DISTANCE = 1;
+var VP_DISTANCE = 700;
 
 function render(time) {
     requestAnimationFrame(render);
@@ -131,9 +160,7 @@ function render(time) {
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
 
-    modelView = lookAt([0,VP_DISTANCE,VP_DISTANCE], [0,0,0], [0,1,0]);
-
-    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+    modelView = lookAt([200,200,VP_DISTANCE], [0,0,0], [0,1,0]);
 
     drawVan();
 }
