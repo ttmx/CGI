@@ -80,6 +80,7 @@ function drawVan() {
                 cylinderDraw(gl, program);
             popMatrix();
             pushMatrix();
+                multTranslation(0, 20, 0);
                 pushMatrix()
                     multScale(30, 30, 30);
                     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
@@ -87,6 +88,8 @@ function drawVan() {
                 popMatrix();
                 pushMatrix();
                     pushMatrix();
+                        multRotationZ(-45);
+                        multTranslation(0, 20, 0);
                         multScale(20, 20, 50);
                         gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                         cylinderDraw(gl, program);
