@@ -15,7 +15,7 @@ var eye = [200,200,700];
 const FRONT_AREA = 1.5*1.5; // m²
 const DRAG_COEF = 0.51; // number
 const AIR_DENSITY = 1.2041; // Kg/m³
-const WHEEL_SIZE = 100; // cm
+const WHEEL_DIAMETER = 100/3*2; // cm
 const WEIGHT = 3000; // kg
 const GRAVITY = 9.8; // m/s²
 const ROLLING_RESISTANCE = 0.01; // Newton
@@ -24,6 +24,7 @@ var torque = 0; // Newtons*meter
 var rotation = 0; // angle
 var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
+var vanPosition = 0; // m
 
 var wheelAngle = 0; //degrees
 var antennaRotation = -60; //degrees
@@ -85,7 +86,7 @@ function rollingResistance(){
 
 //Newtons
 function traction(){
-	return torque/(WHEEL_SIZE/100/2);
+	return torque/(WHEEL_DIAMETER/100/2);
 }
 
 //Newtons
@@ -185,7 +186,7 @@ function drawVan() {
                 multRotationY(wheelAngle);
                 multRotationX(90);
                 multRotationY(-rotation);
-                multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
+                multScale(WHEEL_DIAMETER, 80, WHEEL_DIAMETER);
                 gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
@@ -203,7 +204,7 @@ function drawVan() {
                 multRotationY(wheelAngle);
                 multRotationX(-90);
                 multRotationY(rotation);
-                multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
+                multScale(WHEEL_DIAMETER, 80, WHEEL_DIAMETER);
                 gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
@@ -220,19 +221,22 @@ function drawVan() {
     }
 
     pushMatrix();
-        multScale(512, 256, 256);
-        gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
-        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-        cubeDraw(gl, program);
-    popMatrix();
-    pushMatrix();
-        multTranslation(0, 153, 0);
-        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-        drawAntenna();
-    popMatrix();
-    pushMatrix();
-        multTranslation(-150, -115, 0);
-        drawChassis();
+        multTranslation(vanPosition, 0 , 0);
+        pushMatrix();
+            multScale(512, 256, 256);
+            gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
+            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+            cubeDraw(gl, program);
+        popMatrix();
+        pushMatrix();
+            multTranslation(0, 153, 0);
+            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+            drawAntenna();
+        popMatrix();
+        pushMatrix();
+            multTranslation(-150, -115, 0);
+            drawChassis();
+        popMatrix();
     popMatrix();
 }
 
@@ -245,9 +249,10 @@ function render(time) {
 		time = 0;
 	}
 
-	actualSpeed += (accel())*(time-lastTick)/1000;
-	rotation += (actualSpeed/(WHEEL_SIZE*Math.PI/100)*360)*(time-lastTick)/1000;
+	actualSpeed = Math.max(actualSpeed + accel()*(time-lastTick)/1000, 0);
+	rotation += ((actualSpeed * (time-lastTick)/1000)/(WHEEL_DIAMETER*Math.PI))*360;
 	torque -= torque*0.2*(time-lastTick)/1000;
+	vanPosition += actualSpeed * ((time-lastTick) / 1000);
 
 	lastTick = time;
     requestAnimationFrame(render);
