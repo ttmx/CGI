@@ -41,12 +41,16 @@
 
 <script id="default-fragment" type="x-shader/x-fragment">
     precision highp float;
-
+    uniform vec4 fColor;
+    uniform bool fSolidColor;
     varying vec3 fNormal;
 
     void main() {
-        gl_FragColor = vec4(abs(fNormal), 1.0);
-
+        if (fSolidColor) {
+            gl_FragColor = fColor;
+        } else {
+            gl_FragColor = vec4(abs(fNormal), 1.0);
+        }
     }
 </script>
 

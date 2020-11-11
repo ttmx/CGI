@@ -4,6 +4,7 @@ var program;
 var aspect;
 
 var mProjectionLoc, mModelViewLoc;
+var fColorLoc, fSolidColorLoc;
 
 var matrixStack = [];
 var modelView;
@@ -27,6 +28,8 @@ var actualSpeed = 0; // m/s
 var wheelAngle = 0; //degrees
 var antennaRotation = -60; //degrees
 var antennaPivot = -60; //degrees
+
+var solidColor = true;
 
 // Stack related operations
 function pushMatrix() {
@@ -117,6 +120,8 @@ window.onload = function() {
 
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
+    fColorLoc = gl.getUniformLocation(program, "fColor");
+    fSolidColorLoc = gl.getUniformLocation(program, "fSolidColor");
 
     sphereInit(gl);
 
@@ -130,6 +135,7 @@ function drawVan() {
             multRotationY(antennaRotation);
             pushMatrix();
                 multScale(20, 50, 20);
+                gl.uniform4fv(fColorLoc, [1.0, 1.0, 0.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
@@ -137,6 +143,7 @@ function drawVan() {
                 multTranslation(0, 20, 0);
                 pushMatrix()
                     multScale(30, 30, 30);
+                    gl.uniform4fv(fColorLoc, [0.75, 0.0, 1.0, 1.0]);
                     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                     sphereDraw(gl, program);
                 popMatrix();
@@ -145,12 +152,14 @@ function drawVan() {
                     pushMatrix();
                         multTranslation(0, 50, 0);
 						multScale(20, 100, 20);
+                        gl.uniform4fv(fColorLoc, [1.0, 1.0, 1.0, 1.0]);
 						gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
 						cylinderDraw(gl, program);
 						pushMatrix();
 							multTranslation(-1,0.4,0);
 							multScale(1/20*80, 1/100*20, 1/20*20);
 							multRotationZ(90);
+                            gl.uniform4fv(fColorLoc, [1.0, 0.5, 0.0, 1.0]);
 							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
 							cylinderDraw(gl, program);
 						popMatrix();
@@ -158,6 +167,7 @@ function drawVan() {
 							multRotationZ(90);
 							multTranslation(0.4,3,0);
 							multScale(3/4*2, 4/5, 4*2);
+                            gl.uniform4fv(fColorLoc, [0.0, 0.0, 1.0, 1.0]);
 							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
 							paraboloidDraw(gl, program);
 						popMatrix();
@@ -176,14 +186,15 @@ function drawVan() {
                 multRotationX(90);
                 multRotationY(-rotation);
                 multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
+                gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
             popMatrix();
             pushMatrix();
                 multRotationZ(-rotation);
                 multRotationX(90);
-
                 multScale(30, 270, 30);
+                gl.uniform4fv(fColorLoc, [1.0, 0.0, 0.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
@@ -193,6 +204,7 @@ function drawVan() {
                 multRotationX(-90);
                 multRotationY(rotation);
                 multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
+                gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
             popMatrix();
@@ -209,6 +221,7 @@ function drawVan() {
 
     pushMatrix();
         multScale(512, 256, 256);
+        gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
         gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
         cubeDraw(gl, program);
     popMatrix();
@@ -244,6 +257,7 @@ function render(time) {
     let projection = ortho(-VP_DISTANCE*aspect,VP_DISTANCE*aspect, -VP_DISTANCE, VP_DISTANCE,-3*VP_DISTANCE,30*VP_DISTANCE);
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
+    gl.uniform1i(fSolidColorLoc, solidColor);
 
     modelView = lookAt(eye, [0,0,0], [0,1,0]);
 
@@ -308,8 +322,12 @@ window.onkeydown = (key) => {
         case '-':
 			VP_DISTANCE +=10;
 			break;
-        case ' ':
+        case 'y':
 			eye = [eye[0],eye[1]+10,eye[2]];
+		break;
+        case ' ':
+            solidColor = !solidColor;
+            break;
     }
 }
 
