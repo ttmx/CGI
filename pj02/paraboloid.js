@@ -9,12 +9,13 @@ var paraboloid_normals_buffer;
 var paraboloid_faces_buffer;
 var paraboloid_edges_buffer;
 
-var SPHERE_LATS=20;
-var SPHERE_LONS=30;
+var PARABOLOID_LATS=20;
+var PARABOLOID_LONS=30;
+var THICC = 0.1;
 
 function paraboloidInit(gl, nlat, nlon) {
-    nlat = nlat | SPHERE_LATS;
-    nlon = nlon | SPHERE_LONS;
+    nlat = nlat | PARABOLOID_LATS;
+    nlon = nlon | PARABOLOID_LONS;
     paraboloidBuild(nlat, nlon);
     paraboloidUploadData(gl);
 }
@@ -30,14 +31,14 @@ function paraboloidBuild(nlat, nlon)
     var r = 0.5;
 
     // Generate north polar cap
-    var north = vec3(0,r,0);
+    var north = vec3(0,-r+THICC,0);
     paraboloid_points.push(north);
     paraboloid_normals.push(vec3(0,1,0));
 
     // Generate middle
     for(var i=0, phi=Math.PI/2-d_phi; i<nlat; i++, phi-=d_phi) {
         for(var j=0, theta=0; j<nlon; j++, theta+=d_theta) {
-            var pt = vec3(r*Math.cos(phi)*Math.cos(theta),-Math.abs(r*Math.sin(phi)),r*Math.cos(phi)*Math.sin(theta));
+            var pt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + ((phi>0)?THICC:0) ,r*Math.cos(phi)*Math.sin(theta));
             paraboloid_points.push(pt);
             var n = vec3(pt);
             paraboloid_normals.push(normalize(n));
@@ -47,54 +48,54 @@ function paraboloidBuild(nlat, nlon)
     // Generate norh south cap
     var south = vec3(0,-r,0);
     paraboloid_points.push(south);
-    paraboloid_normals.push(vec3(0,-1,0));
+    paraboloid_normals.push(vec3(0,1,0));
 
     // Generate the faces
 
     // north pole faces
-    for(var i=0; i<nlon-1; i++) {
-        paraboloid_faces.push(0);
-        paraboloid_faces.push(i+2);
-        paraboloid_faces.push(i+1);
-    }
-    paraboloid_faces.push(0);
-    paraboloid_faces.push(1);
-    paraboloid_faces.push(nlon);
+    // for(var i=0; i<nlon-1; i++) {
+    //     paraboloid_faces.push(0);
+    //     paraboloid_faces.push(i+2);
+    //     paraboloid_faces.push(i+1);
+    // }
+    // paraboloid_faces.push(0);
+    // paraboloid_faces.push(1);
+    // paraboloid_faces.push(nlon);
 
     // general middle faces
     var offset=1;
 
-    for(var i=0; i<nlat-1; i++) {
-        for(var j=0; j<nlon-1; j++) {
-            var p = offset+i*nlon+j;
-            paraboloid_faces.push(p);
-            paraboloid_faces.push(p+nlon+1);
-            paraboloid_faces.push(p+nlon);
+    // for(var i=0; i<nlat; i++) {
+    //     for(var j=0; j<nlon-1; j++) {
+    //         var p = offset+i*nlon+j;
+    //         paraboloid_faces.push(p);
+    //         paraboloid_faces.push(p+nlon+1);
+    //         paraboloid_faces.push(p+nlon);
 
-            paraboloid_faces.push(p);
-            paraboloid_faces.push(p+1);
-            paraboloid_faces.push(p+nlon+1);
-        }
-        var p = offset+i*nlon+nlon-1;
-        paraboloid_faces.push(p);
-        paraboloid_faces.push(p+1);
-        paraboloid_faces.push(p+nlon);
+    //         paraboloid_faces.push(p);
+    //         paraboloid_faces.push(p+1);
+    //         paraboloid_faces.push(p+nlon+1);
+    //     }
+    //     var p = offset+i*nlon+nlon-1;
+    //     paraboloid_faces.push(p);
+    //     paraboloid_faces.push(p+1);
+    //     paraboloid_faces.push(p+nlon);
 
-        paraboloid_faces.push(p);
-        paraboloid_faces.push(p-nlon+1);
-        paraboloid_faces.push(p+1);
-    }
+    //     paraboloid_faces.push(p);
+    //     paraboloid_faces.push(p-nlon+1);
+    //     paraboloid_faces.push(p+1);
+    // }
 
-    // south pole faces
-    var offset = 1 + (nlat-1) * nlon;
-    for(var j=0; j<nlon-1; j++) {
-        paraboloid_faces.push(offset+nlon);
-        paraboloid_faces.push(offset+j);
-        paraboloid_faces.push(offset+j+1);
-    }
-    paraboloid_faces.push(offset+nlon);
-    paraboloid_faces.push(offset+nlon-1);
-    paraboloid_faces.push(offset);
+    // // south pole faces
+    // var offset = 1 + (nlat-1) * nlon;
+    // for(var j=0; j<nlon-1; j++) {
+    //     paraboloid_faces.push(offset+nlon);
+    //     paraboloid_faces.push(offset+j);
+    //     paraboloid_faces.push(offset+j+1);
+    // }
+    // paraboloid_faces.push(offset+nlon);
+    // paraboloid_faces.push(offset+nlon-1);
+    // paraboloid_faces.push(offset);
 
     // Build the edges
     for(var i=0; i<nlon; i++) {

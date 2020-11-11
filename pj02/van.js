@@ -14,7 +14,7 @@ var eye = [200,200,700];
 const FRONT_AREA = 1.5*1.5; // m²
 const DRAG_COEF = 0.51; // number
 const AIR_DENSITY = 1.2041; // Kg/m³
-const WHEEL_SIZE = 60; // cm
+const WHEEL_SIZE = 100; // cm
 const WEIGHT = 3000; // kg
 const GRAVITY = 9.8; // m/s²
 const ROLLING_RESISTANCE = 0.01; // Newton
@@ -107,6 +107,9 @@ window.onload = function() {
     cylinderInit(gl);
     cubeInit(gl);
 	paraboloidInit(gl);
+	torusInit(gl);
+
+	gl.enable(gl.DEPTH_TEST);
 
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
@@ -121,7 +124,7 @@ function drawVan() {
     function drawAntenna() {
         pushMatrix();
             pushMatrix();
-                multScale(20, 20, 50);
+                multScale(20, 50, 20);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
@@ -134,17 +137,26 @@ function drawVan() {
                 popMatrix();
                 pushMatrix();
                     pushMatrix();
-                        multRotationZ(-45);
-                        multTranslation(0, 20, 0);
-                        multScale(20, 20, 50);
-                        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                        cylinderDraw(gl, program);
-                    pushMatrix();
-						multTranslation(0,1,0);
-                        multScale(4, 1, 4);
-                        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                        paraboloidDraw(gl, program);
-                    popMatrix();
+                        multRotationZ(-60);
+                        multRotationX(-60);
+                        multTranslation(0, 50, 0);
+						multScale(20, 100, 20);
+						gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+						cylinderDraw(gl, program);
+						pushMatrix();
+							multTranslation(-1,0.4,0);
+							multScale(1/20*80, 1/100*20, 1/20*20);
+							multRotationZ(90);
+							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+							cylinderDraw(gl, program);
+						popMatrix();
+						pushMatrix();
+							multRotationZ(90);
+							multTranslation(0.4,3,0);
+							multScale(3/4*2, 4/5, 4*2);
+							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+							paraboloidDraw(gl, program);
+						popMatrix();
                     popMatrix();
                 popMatrix();
             popMatrix();
@@ -158,9 +170,9 @@ function drawVan() {
             pushMatrix();
                 multTranslation(0, 0, 135);
                 multRotationX(90);
-                multScale(WHEEL_SIZE, 30, WHEEL_SIZE);
+                multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                cylinderDraw(gl, program);
+                torusDraw(gl, program);
             popMatrix();
             pushMatrix();
                 multRotationX(90);
@@ -171,9 +183,9 @@ function drawVan() {
             pushMatrix();
                 multTranslation(0, 0, -135);
                 multRotationX(-90);
-                multScale(WHEEL_SIZE, 30, WHEEL_SIZE);
+                multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                cylinderDraw(gl, program);
+                torusDraw(gl, program);
             popMatrix();
         }
 
@@ -220,7 +232,7 @@ function render(time) {
     resize(gl);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    let projection = ortho(-VP_DISTANCE*aspect,VP_DISTANCE*aspect, -VP_DISTANCE, VP_DISTANCE,-3*VP_DISTANCE,3*VP_DISTANCE);
+    let projection = ortho(-VP_DISTANCE*aspect,VP_DISTANCE*aspect, -VP_DISTANCE, VP_DISTANCE,-3*VP_DISTANCE,30*VP_DISTANCE);
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
 
@@ -273,6 +285,8 @@ window.onkeydown = (key) => {
         case '-':
 			VP_DISTANCE +=10;
 			break;
+        case ' ':
+			eye = [eye[0],eye[1]+10,eye[2]];
     }
 }
 
