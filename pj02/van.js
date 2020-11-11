@@ -9,6 +9,21 @@ var matrixStack = [];
 var modelView;
 var eye = [200,200,700];
 
+
+// Overengineered physics constants
+const FRONT_AREA = 1.5*1.5; // m²
+const DRAG_COEF = 0.51; // number
+const AIR_DENSITY = 1.2041; // Kg/m³
+const WHEEL_SIZE = 60; // cm
+const WEIGHT = 3000; // kg
+const GRAVITY = 9.8; // m/s²
+const ROLLING_RESISTANCE = 0.01; // Newton
+
+var enginePower = 0; //???
+var rotation = 0; // angle
+var rps = 0; //rotations per second
+var actualSpeed = 0; // m/s
+
 // Stack related operations
 function pushMatrix() {
     let m =  mat4(modelView[0], modelView[1],
@@ -48,6 +63,21 @@ function resize(gl) {
     }
     aspect = gl.canvas.width / gl.canvas.height;
 }
+
+
+// Physics
+function drag(){
+	return FRONT_AREA * DRAG_COEF * actualSpeed * actualSpeed * AIR_DENSITY/2;
+}
+
+function rollingResistance(){
+	return WEIGHT * GRAVITY * ROLLING_RESISTANCE;
+}
+
+function accel(){
+	return (enginePower - drag())/WEIGHT;
+}
+
 
 window.onload = function() {
 
@@ -106,10 +136,11 @@ function drawVan() {
     function drawChassis() {
 
         function drawAxle() {
+			multRotationZ(-rotation);
             pushMatrix();
                 multTranslation(0, 0, 135);
                 multRotationX(90);
-                multScale(60, 30, 60);
+                multScale(WHEEL_SIZE, 30, WHEEL_SIZE);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
@@ -122,7 +153,7 @@ function drawVan() {
             pushMatrix();
                 multTranslation(0, 0, -135);
                 multRotationX(-90);
-                multScale(60, 30, 60);
+                multScale(WHEEL_SIZE, 30, WHEEL_SIZE);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
@@ -155,7 +186,19 @@ function drawVan() {
 
 var VP_DISTANCE = 700;
 
+var lastTick;
 function render(time) {
+	if (isNaN(time)){
+		lastTick = 0;
+		time = 0;
+	}
+	actualSpeed += accel()*(time-lastTick)/1000;
+	rotation += (actualSpeed/(WHEEL_SIZE*Math.PI/100)*360)*(time-lastTick)/1000;
+	enginePower -= rollingResistance()*(time-lastTick)/1000;
+	if (enginePower < 0){
+		enginePower = 0;
+	}
+	lastTick = time;
     requestAnimationFrame(render);
     resize(gl);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -173,10 +216,13 @@ function render(time) {
 window.onkeydown = (key) => {
     switch (key.key) {
         case 'w':
+			enginePower += 500;
             break;
         case 'a':
             break;
         case 's':
+			enginePower -= 1000;
+			if (enginePower < 0) enginePower = 0;
             break;
         case 'd':
             break;
