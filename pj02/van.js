@@ -24,6 +24,8 @@ var rotation = 0; // angle
 var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
 
+var wheelAngle = 0; //degrees
+
 // Stack related operations
 function pushMatrix() {
     let m =  mat4(modelView[0], modelView[1],
@@ -165,24 +167,29 @@ function drawVan() {
 
     function drawChassis() {
 
-        function drawAxle() {
-			multRotationZ(-rotation);
+        function drawAxle(wheelAngle) {
             pushMatrix();
                 multTranslation(0, 0, 135);
+                multRotationY(wheelAngle);
                 multRotationX(90);
+                multRotationY(-rotation);
                 multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
             popMatrix();
             pushMatrix();
+                multRotationZ(-rotation);
                 multRotationX(90);
+
                 multScale(30, 270, 30);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
             pushMatrix();
                 multTranslation(0, 0, -135);
+                multRotationY(wheelAngle);
                 multRotationX(-90);
+                multRotationY(rotation);
                 multScale(WHEEL_SIZE/3*2, 80, WHEEL_SIZE/3*2);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
@@ -190,11 +197,11 @@ function drawVan() {
         }
 
         pushMatrix();
-            drawAxle();
+            drawAxle(0);
         popMatrix();
         pushMatrix();
             multTranslation(300, 0, 0);
-            drawAxle();
+            drawAxle(wheelAngle);
         popMatrix();
     }
 
@@ -223,7 +230,7 @@ function render(time) {
 		time = 0;
 	}
 
-	actualSpeed += ((accel())*(time-lastTick)/1000);
+	actualSpeed += (accel())*(time-lastTick)/1000;
 	rotation += (actualSpeed/(WHEEL_SIZE*Math.PI/100)*360)*(time-lastTick)/1000;
 	torque -= torque*0.2*(time-lastTick)/1000;
 
@@ -245,10 +252,15 @@ function render(time) {
 window.onkeydown = (key) => {
     switch (key.key) {
         case 'w':
-			torque += 300;
-			if (torque > 5000) torque = 5000;
+            if (wheelAngle === 0) {
+                torque += 300;
+                if (torque > 5000) torque = 5000;
+            }
             break;
         case 'a':
+            if (actualSpeed < 0) {
+                wheelAngle = Math.min(wheelAngle + 5, 45);
+            }
             break;
         case 's':
 			torque -= 600;
@@ -258,6 +270,9 @@ window.onkeydown = (key) => {
 			if (actualSpeed < 0) actualSpeed = 0;
             break;
         case 'd':
+            if (actualSpeed < 0) {
+                wheelAngle = Math.max(wheelAngle - 5, -45);
+            }
             break;
         case 'i':
             break;
