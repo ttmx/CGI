@@ -19,18 +19,22 @@ const WHEEL_DIAMETER = 100/3*2; // cm
 const WEIGHT = 3000; // kg
 const GRAVITY = 9.8; // m/s²
 const ROLLING_RESISTANCE = 0.01; // Newton
+const WHEEL_BASE = 270;
 
 var torque = 0; // Newtons*meter
 var rotation = 0; // angle
 var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
-var vanPosition = 0; // m
+var vanPosition = [0, 0]; // m
 
 var wheelAngle = 0; //degrees
 var antennaRotation = -60; //degrees
 var antennaPivot = -60; //degrees
 
 var solidColor = true;
+var turningRadius = 0; //m
+var VP_DISTANCE = 700;
+var vanYaw = 0; // degrees
 
 // Stack related operations
 function pushMatrix() {
@@ -81,7 +85,7 @@ function drag(){
 
 //Newtons
 function rollingResistance(){
-	return WEIGHT * GRAVITY * ROLLING_RESISTANCE*Math.abs(actualSpeed)/(actualSpeed!= 0)? actualSpeed :1;
+	return WEIGHT * GRAVITY * ROLLING_RESISTANCE*Math.abs(actualSpeed)/(actualSpeed!== 0)? actualSpeed :1;
 }
 
 //Newtons
@@ -182,7 +186,7 @@ function drawVan() {
 
         function drawAxle(wheelAngle) {
             pushMatrix();
-                multTranslation(0, 0, 135);
+                multTranslation(0, 0, WHEEL_BASE/2);
                 multRotationY(wheelAngle);
                 multRotationX(90);
                 multRotationY(-rotation);
@@ -200,7 +204,7 @@ function drawVan() {
                 cylinderDraw(gl, program);
             popMatrix();
             pushMatrix();
-                multTranslation(0, 0, -135);
+                multTranslation(0, 0, -WHEEL_BASE/2);
                 multRotationY(wheelAngle);
                 multRotationX(-90);
                 multRotationY(rotation);
@@ -221,7 +225,12 @@ function drawVan() {
     }
 
     pushMatrix();
-        multTranslation(vanPosition, 0 , 0);
+
+        multTranslation(vanPosition[0], 0 , vanPosition[1]);
+
+        multRotationY(vanYaw);
+
+
         pushMatrix();
             multScale(512, 256, 256);
             gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
@@ -240,24 +249,32 @@ function drawVan() {
     popMatrix();
 }
 
-var VP_DISTANCE = 700;
-
 var lastTick;
 function render(time) {
 	if (isNaN(time)){
 		lastTick = 0;
 		time = 0;
 	}
+    requestAnimationFrame(render);
 
 	actualSpeed = Math.max(actualSpeed + accel()*(time-lastTick)/1000, 0);
-	rotation += ((actualSpeed * (time-lastTick)/1000)/(WHEEL_DIAMETER*Math.PI))*360;
+	rotation += ((actualSpeed * (time-lastTick)/1000)/(WHEEL_DIAMETER*Math.PI/100))*360;
 	torque -= torque*0.2*(time-lastTick)/1000;
-	vanPosition += actualSpeed * ((time-lastTick) / 1000);
+	let positionDelta = actualSpeed * ((time-lastTick) / 1000) * 100;
+    turningRadius = WHEEL_BASE/Math.tan(radians(wheelAngle));
+    if (turningRadius !== Infinity) {
+        vanYaw += positionDelta / (turningRadius * 2 * Math.PI) * 360;
+        vanYaw = vanYaw % 360;
+        console.log(vanYaw);
+    }
+	vanPosition[0] += positionDelta * Math.cos(-radians(wheelAngle + vanYaw));
+    vanPosition[1] += positionDelta * Math.sin(-radians(wheelAngle + vanYaw));
+
 
 	lastTick = time;
-    requestAnimationFrame(render);
+
     resize(gl);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     let projection = ortho(-VP_DISTANCE*aspect,VP_DISTANCE*aspect, -VP_DISTANCE, VP_DISTANCE,-3*VP_DISTANCE,30*VP_DISTANCE);
 
@@ -273,15 +290,11 @@ function render(time) {
 window.onkeydown = (key) => {
     switch (key.key) {
         case 'w':
-            if (wheelAngle === 0) {
-                torque += 300;
-                if (torque > 5000) torque = 5000;
-            }
+            torque += 600;
+            if (torque > 5000) torque = 5000;
             break;
         case 'a':
-            if (actualSpeed <= 0) {
-                wheelAngle = Math.min(wheelAngle + 5, 45);
-            }
+            wheelAngle = Math.min(wheelAngle + 5, 45);
             break;
         case 's':
 			torque -= 600;
@@ -291,9 +304,7 @@ window.onkeydown = (key) => {
 			if (actualSpeed < 0) actualSpeed = 0;
             break;
         case 'd':
-            if (actualSpeed <= 0) {
-                wheelAngle = Math.max(wheelAngle - 5, -45);
-            }
+            wheelAngle = Math.max(wheelAngle - 5, -45);
             break;
         case 'i':
             antennaPivot = Math.min(antennaPivot + 5, 60);
