@@ -15,26 +15,38 @@ var eye = [200,200,700];
 const FRONT_AREA = 1.5*1.5; // m²
 const DRAG_COEF = 0.51; // number
 const AIR_DENSITY = 1.2041; // Kg/m³
-const WHEEL_DIAMETER = 100/3*2; // cm
-const WEIGHT = 3000; // kg
+const WHEEL_RADIUS = 0.35; // m
+const WEIGHT = 1600; // kg
 const GRAVITY = 9.8; // m/s²
-const ROLLING_RESISTANCE = 0.01; // Newton
+const ROLLING_RESISTANCE = 15; // Newton
 const WHEEL_BASE = 270;
+const FRONT_GEAR_MULT = 8;
+const REAR_GEAR_MULT = -8;
 
+var gear = 0;
 var torque = 0; // Newtons*meter
+var torqueDelta = 0; // Newtons*meter/second
 var rotation = 0; // angle
 var rps = 0; //rotations per second
 var actualSpeed = 0; // m/s
 var vanPosition = [0, 0]; // m
 
+// Wheel Rotation
 var wheelAngle = 0; //degrees
-var antennaRotation = -60; //degrees
-var antennaPivot = -60; //degrees
+var wheelAngleDelta = 0; //degress per second
 
-var solidColor = true;
+// Antenna Rotation
+var antennaRotation = -60; //degrees
+var antennaRotationDelta = 0; // degrees/second
+var antennaPivot = -60; //degrees
+var antennaPivotDelta = 0; // degrees/second
+
+// Turning
 var turningRadius = 0; //m
 var VP_DISTANCE = 700;
 var vanYaw = 0; // degrees
+
+var solidColor = true;
 
 // Stack related operations
 function pushMatrix() {
@@ -85,23 +97,23 @@ function drag(){
 
 //Newtons
 function rollingResistance(){
-	return WEIGHT * GRAVITY * ROLLING_RESISTANCE*Math.abs(actualSpeed)/(actualSpeed!== 0)? actualSpeed :1;
+	return -1*actualSpeed * ROLLING_RESISTANCE;
 }
 
 //Newtons
 function traction(){
-	return torque/(WHEEL_DIAMETER/100/2);
+	return torque*gear/WHEEL_RADIUS;
 }
 
 //Newtons
-function engineForce(){
-	return traction() + drag() - rollingResistance();
+function totalForce(){
+	return traction() + drag() + rollingResistance();
 }
 
 
 //m/s²
 function accel(){
-	return engineForce()/WEIGHT;
+	return totalForce()/WEIGHT;
 }
 
 
@@ -119,7 +131,7 @@ window.onload = function() {
     cylinderInit(gl);
     cubeInit(gl);
 	paraboloidInit(gl);
-	torusInit(gl);
+	torusInit(gl,10);
 
 	gl.enable(gl.DEPTH_TEST);
 
@@ -171,7 +183,7 @@ function drawVan() {
 						pushMatrix();
 							multRotationZ(90);
 							multTranslation(0.4,3,0);
-							multScale(3/4*2, 4/5, 4*2);
+							multScale(3/4*2, 12/5, 4*2);
                             gl.uniform4fv(fColorLoc, [0.0, 0.0, 1.0, 1.0]);
 							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
 							paraboloidDraw(gl, program);
@@ -190,7 +202,7 @@ function drawVan() {
                 multRotationY(wheelAngle);
                 multRotationX(90);
                 multRotationY(-rotation);
-                multScale(WHEEL_DIAMETER, 80, WHEEL_DIAMETER);
+                multScale(WHEEL_RADIUS*100, 80, WHEEL_RADIUS*100);
                 gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
@@ -208,7 +220,7 @@ function drawVan() {
                 multRotationY(wheelAngle);
                 multRotationX(-90);
                 multRotationY(rotation);
-                multScale(WHEEL_DIAMETER, 80, WHEEL_DIAMETER);
+                multScale(WHEEL_RADIUS*100, 80, WHEEL_RADIUS*100);
                 gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 torusDraw(gl, program);
@@ -257,19 +269,26 @@ function render(time) {
 	}
     requestAnimationFrame(render);
 
-	actualSpeed = Math.max(actualSpeed + accel()*(time-lastTick)/1000, 0);
-	rotation += ((actualSpeed * (time-lastTick)/1000)/(WHEEL_DIAMETER*Math.PI/100))*360;
-	torque -= torque*0.2*(time-lastTick)/1000;
-	let positionDelta = actualSpeed * ((time-lastTick) / 1000) * 100;
+	let timeDelta = (time-lastTick)/1000;
+
+	// Speedy calcs
+	actualSpeed += accel()*timeDelta;
+	torque = Math.min(torque-(torque*0.8*timeDelta) + torqueDelta*(timeDelta), 500);
+	rotation += ((actualSpeed * timeDelta)/(WHEEL_RADIUS*Math.PI*2))*360;
+	let positionDelta = actualSpeed * timeDelta * 100;
+
+	// Wheel Rotation calcs
+    wheelAngle = Math.max(Math.min(wheelAngle + wheelAngleDelta*timeDelta, 30),-30);
     turningRadius = WHEEL_BASE/Math.tan(radians(wheelAngle));
     if (turningRadius !== Infinity) {
         vanYaw += positionDelta / (turningRadius * 2 * Math.PI) * 360;
         vanYaw = vanYaw % 360;
-        console.log(vanYaw);
     }
 	vanPosition[0] += positionDelta * Math.cos(-radians(wheelAngle + vanYaw));
     vanPosition[1] += positionDelta * Math.sin(-radians(wheelAngle + vanYaw));
 
+    antennaPivot = Math.max(Math.min(antennaPivot + antennaPivotDelta*timeDelta, 60),-100);
+    antennaRotation = (antennaRotation + antennaRotationDelta*timeDelta)%360;
 
 	lastTick = time;
 
@@ -287,50 +306,49 @@ function render(time) {
 }
 
 
-window.onkeydown = (key) => {
-    switch (key.key) {
+window.onkeydown = window.onkeyup = (e) => {
+    switch (e.key) {
         case 'w':
-            torque += 600;
-            if (torque > 5000) torque = 5000;
-            break;
-        case 'a':
-            wheelAngle = Math.min(wheelAngle + 5, 45);
+			gear = FRONT_GEAR_MULT;
+            torqueDelta = (e.type =='keydown')?400:0;
             break;
         case 's':
-			torque -= 600;
-			if (torque < 0) torque = 0;
-			actualSpeed -= 10/30; /* 30 was what I found to be key repeat time in hz,
-				so this gives me about 10m/s² decellaration */
-			if (actualSpeed < 0) actualSpeed = 0;
+			gear = (e.type == 'keydown')?REAR_GEAR_MULT:FRONT_GEAR_MULT;
+            torqueDelta = (e.type =='keydown')?200:0;
+            break;
+        case 'a':
+			wheelAngleDelta = (e.type == 'keydown')?30:0;
             break;
         case 'd':
-            wheelAngle = Math.max(wheelAngle - 5, -45);
+			wheelAngleDelta = (e.type == 'keydown')?-30:0;
             break;
         case 'i':
-            antennaPivot = Math.min(antennaPivot + 5, 60);
+			antennaPivotDelta = (e.type == 'keydown')?80:0;
             break;
         case 'k':
-            antennaPivot = Math.max(antennaPivot - 5, -100);
-            break;
-        case 'j':
-            antennaRotation -= 5;
-            antennaRotation = antennaRotation % 360;
+			antennaPivotDelta = (e.type == 'keydown')?-80:0;
             break;
         case 'l':
-            antennaRotation += 5;
-            antennaRotation = antennaRotation % 360;
+			antennaRotationDelta = (e.type == 'keydown')?80:0;
+            break;
+        case 'j':
+			antennaRotationDelta = (e.type == 'keydown')?-80:0;
             break;
         case '0':
-            eye = [200,200, 700];
+			if (e.type == 'keydown')
+            	eye = [200,200, 700];
             break;
         case '1':
-            eye = [0,VP_DISTANCE,1];
+			if (e.type == 'keydown')
+            	eye = [0,VP_DISTANCE,1];
             break;
         case '2':
-            eye = [0,0,VP_DISTANCE];
+			if (e.type == 'keydown')
+            	eye = [0,0,VP_DISTANCE];
             break;
         case '3':
-            eye = [VP_DISTANCE,0,0];
+			if (e.type == 'keydown')
+            	eye = [VP_DISTANCE,0,0];
             break;
         case '+':
 			VP_DISTANCE -=10;
@@ -342,7 +360,8 @@ window.onkeydown = (key) => {
 			eye = [eye[0],eye[1]+10,eye[2]];
 		break;
         case ' ':
-            solidColor = !solidColor;
+			if(e.type == 'keydown')
+				solidColor = !solidColor;
             break;
     }
 }
