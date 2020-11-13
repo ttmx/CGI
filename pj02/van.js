@@ -210,7 +210,7 @@ function drawVan() {
             pushMatrix();
                 multRotationZ(-rotation);
                 multRotationX(90);
-                multScale(30, 270, 30);
+                multScale(20, 270, 20);
                 gl.uniform4fv(fColorLoc, [1.0, 0.0, 0.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
@@ -289,7 +289,6 @@ function render(time) {
 
     antennaPivot = Math.max(Math.min(antennaPivot + antennaPivotDelta*timeDelta, 60),-100);
     antennaRotation = (antennaRotation + antennaRotationDelta*timeDelta)%360;
-
 	lastTick = time;
 
     resize(gl);
@@ -309,45 +308,45 @@ function render(time) {
 window.onkeydown = window.onkeyup = (e) => {
     switch (e.key) {
         case 'w':
-			gear = FRONT_GEAR_MULT;
-            torqueDelta = (e.type =='keydown')?400:0;
+            gear = (e.type === 'keydown')?FRONT_GEAR_MULT:0;
+            torqueDelta = (e.type ==='keydown')?400:0;
             break;
         case 's':
-			gear = (e.type == 'keydown')?REAR_GEAR_MULT:FRONT_GEAR_MULT;
-            torqueDelta = (e.type =='keydown')?200:0;
+			gear = (e.type === 'keydown')?REAR_GEAR_MULT:0;
+            torqueDelta = (e.type ==='keydown')?200:0;
             break;
         case 'a':
-			wheelAngleDelta = (e.type == 'keydown')?30:0;
+			wheelAngleDelta = (e.type === 'keydown')?30:0;
             break;
         case 'd':
-			wheelAngleDelta = (e.type == 'keydown')?-30:0;
+			wheelAngleDelta = (e.type === 'keydown')?-30:0;
             break;
         case 'i':
-			antennaPivotDelta = (e.type == 'keydown')?80:0;
+			antennaPivotDelta = (e.type === 'keydown')?80:0;
             break;
         case 'k':
-			antennaPivotDelta = (e.type == 'keydown')?-80:0;
+			antennaPivotDelta = (e.type === 'keydown')?-80:0;
             break;
         case 'l':
-			antennaRotationDelta = (e.type == 'keydown')?80:0;
+			antennaRotationDelta = (e.type === 'keydown')?80:0;
             break;
         case 'j':
-			antennaRotationDelta = (e.type == 'keydown')?-80:0;
+			antennaRotationDelta = (e.type === 'keydown')?-80:0;
             break;
         case '0':
-			if (e.type == 'keydown')
+			if (e.type === 'keydown')
             	eye = [200,200, 700];
             break;
         case '1':
-			if (e.type == 'keydown')
+			if (e.type === 'keydown')
             	eye = [0,VP_DISTANCE,1];
             break;
         case '2':
-			if (e.type == 'keydown')
+			if (e.type === 'keydown')
             	eye = [0,0,VP_DISTANCE];
             break;
         case '3':
-			if (e.type == 'keydown')
+			if (e.type === 'keydown')
             	eye = [VP_DISTANCE,0,0];
             break;
         case '+':
@@ -360,7 +359,7 @@ window.onkeydown = window.onkeyup = (e) => {
 			eye = [eye[0],eye[1]+10,eye[2]];
 		break;
         case ' ':
-			if(e.type == 'keydown')
+			if(e.type === 'keydown')
 				solidColor = !solidColor;
             break;
     }
