@@ -154,43 +154,35 @@ function drawVan() {
             gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
             cylinderDraw(gl, program);
         popMatrix();
-        pushMatrix();
-            multTranslation(0, 20, 0);
-            multRotationZ(antennaPivot);
-            pushMatrix()
-                multScale(30, 30, 30);
-                gl.uniform4fv(fColorLoc, [0.75, 0.0, 1.0, 1.0]);
-                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                sphereDraw(gl, program);
-            popMatrix();
-            pushMatrix();
-                multTranslation(0, 50, 0);
-                pushMatrix();
-				    multScale(20, 100, 20);
-                    gl.uniform4fv(fColorLoc, [1.0, 1.0, 1.0, 1.0]);
-				    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-				    cylinderDraw(gl, program);
-				popMatrix();
-				pushMatrix();
-                    multTranslation(-20,40,0);
-				    pushMatrix();
-				    	multRotationZ(90);
-                        multScale(20, 80, 20);
-                        gl.uniform4fv(fColorLoc, [1.0, 0.5, 0.0, 1.0]);
-				    	gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-				    	cylinderDraw(gl, program);
-				    popMatrix();
-				    pushMatrix();
-                        multTranslation(-40,0,0);
-				    	multRotationZ(90);
-				    	multScale(150, 50, 150);
-                        gl.uniform4fv(fColorLoc, [0.0, 0.0, 1.0, 1.0]);
-				    	gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-				    	paraboloidDraw(gl, program);
-				    popMatrix();
-				popMatrix();
-            popMatrix();
+        multTranslation(0, 20, 0);
+        multRotationZ(antennaPivot);
+        pushMatrix()
+            multScale(30, 30, 30);
+            gl.uniform4fv(fColorLoc, [0.75, 0.0, 1.0, 1.0]);
+            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+            sphereDraw(gl, program);
         popMatrix();
+        multTranslation(0, 50, 0);
+        pushMatrix();
+		    multScale(20, 100, 20);
+            gl.uniform4fv(fColorLoc, [1.0, 1.0, 1.0, 1.0]);
+		    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+		    cylinderDraw(gl, program);
+		popMatrix();
+        multTranslation(-20,40,0);
+		pushMatrix();
+			multRotationZ(90);
+            multScale(20, 80, 20);
+            gl.uniform4fv(fColorLoc, [1.0, 0.5, 0.0, 1.0]);
+			gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+			cylinderDraw(gl, program);
+		popMatrix();
+		multTranslation(-40,0,0);
+		multRotationZ(90);
+		multScale(150, 50, 150);
+		gl.uniform4fv(fColorLoc, [0.0, 0.0, 1.0, 1.0]);
+		gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+		paraboloidDraw(gl, program);
     }
 
     function drawChassis() {
@@ -214,25 +206,21 @@ function drawVan() {
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
                 cylinderDraw(gl, program);
             popMatrix();
-            pushMatrix();
-                multTranslation(0, 0, -WHEEL_BASE/2);
-                multRotationY(wheelAngle);
-                multRotationX(-90);
-                multRotationY(rotation);
-                multScale(WHEEL_RADIUS*100, 80, WHEEL_RADIUS*100);
-                gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
-                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                torusDraw(gl, program);
-            popMatrix();
+            multTranslation(0, 0, -WHEEL_BASE/2);
+            multRotationY(wheelAngle);
+            multRotationX(-90);
+            multRotationY(rotation);
+            multScale(WHEEL_RADIUS*100, 80, WHEEL_RADIUS*100);
+            gl.uniform4fv(fColorLoc, [1.0, 0.0, 1.0, 1.0]);
+            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+            torusDraw(gl, program);
         }
 
         pushMatrix();
             drawAxle(0);
         popMatrix();
-        pushMatrix();
-            multTranslation(300, 0, 0);
-            drawAxle(wheelAngle);
-        popMatrix();
+        multTranslation(300, 0, 0);
+        drawAxle(wheelAngle);
     }
 
     function drawFloor() {
@@ -279,25 +267,21 @@ function drawVan() {
         multScale(256, 0, 256);
         drawFloor();
     popMatrix();
+    multTranslation(vanPosition[0], 0 , vanPosition[1]);
+    multRotationY(vanYaw);
     pushMatrix();
-        multTranslation(vanPosition[0], 0 , vanPosition[1]);
-        multRotationY(vanYaw);
-        pushMatrix();
-            multScale(512, 256, 256);
-            gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
-            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-            cubeDraw(gl, program);
-        popMatrix();
-        pushMatrix();
-            multTranslation(0, 153, 0);
-            multRotationY(antennaRotation);
-            drawAntenna();
-        popMatrix();
-        pushMatrix();
-            multTranslation(-150, -115, 0);
-            drawChassis();
-        popMatrix();
+        multScale(512, 256, 256);
+        gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
+        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+        cubeDraw(gl, program);
     popMatrix();
+    pushMatrix();
+        multTranslation(0, 153, 0);
+        multRotationY(antennaRotation);
+        drawAntenna();
+    popMatrix();
+    multTranslation(-150, -115, 0);
+    drawChassis();
 }
 
 var lastTick;
