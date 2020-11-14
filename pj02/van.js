@@ -149,47 +149,46 @@ function drawVan() {
 
     function drawAntenna() {
         pushMatrix();
-            multRotationY(antennaRotation);
-            pushMatrix();
-                multScale(20, 50, 20);
-                gl.uniform4fv(fColorLoc, [1.0, 1.0, 0.0, 1.0]);
+            multScale(20, 50, 20);
+            gl.uniform4fv(fColorLoc, [1.0, 1.0, 0.0, 1.0]);
+            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+            cylinderDraw(gl, program);
+        popMatrix();
+        pushMatrix();
+            multTranslation(0, 20, 0);
+            multRotationZ(antennaPivot);
+            pushMatrix()
+                multScale(30, 30, 30);
+                gl.uniform4fv(fColorLoc, [0.75, 0.0, 1.0, 1.0]);
                 gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                cylinderDraw(gl, program);
+                sphereDraw(gl, program);
             popMatrix();
             pushMatrix();
-                multTranslation(0, 20, 0);
-                multRotationZ(antennaPivot);
-                pushMatrix()
-                    multScale(30, 30, 30);
-                    gl.uniform4fv(fColorLoc, [0.75, 0.0, 1.0, 1.0]);
-                    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                    sphereDraw(gl, program);
-                popMatrix();
+                multTranslation(0, 50, 0);
                 pushMatrix();
-                    pushMatrix();
-                        multTranslation(0, 50, 0);
-						multScale(20, 100, 20);
-                        gl.uniform4fv(fColorLoc, [1.0, 1.0, 1.0, 1.0]);
-						gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-						cylinderDraw(gl, program);
-						pushMatrix();
-							multTranslation(-1,0.4,0);
-							multScale(1/20*80, 1/100*20, 1/20*20);
-							multRotationZ(90);
-                            gl.uniform4fv(fColorLoc, [1.0, 0.5, 0.0, 1.0]);
-							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-							cylinderDraw(gl, program);
-						popMatrix();
-						pushMatrix();
-							multRotationZ(90);
-							multTranslation(0.4,3,0);
-							multScale(3/4*2, 12/5, 4*2);
-                            gl.uniform4fv(fColorLoc, [0.0, 0.0, 1.0, 1.0]);
-							gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-							paraboloidDraw(gl, program);
-						popMatrix();
-                    popMatrix();
-                popMatrix();
+				    multScale(20, 100, 20);
+                    gl.uniform4fv(fColorLoc, [1.0, 1.0, 1.0, 1.0]);
+				    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+				    cylinderDraw(gl, program);
+				popMatrix();
+				pushMatrix();
+                    multTranslation(-20,40,0);
+				    pushMatrix();
+				    	multRotationZ(90);
+                        multScale(20, 80, 20);
+                        gl.uniform4fv(fColorLoc, [1.0, 0.5, 0.0, 1.0]);
+				    	gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+				    	cylinderDraw(gl, program);
+				    popMatrix();
+				    pushMatrix();
+                        multTranslation(-40,0,0);
+				    	multRotationZ(90);
+				    	multScale(150, 50, 150);
+                        gl.uniform4fv(fColorLoc, [0.0, 0.0, 1.0, 1.0]);
+				    	gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+				    	paraboloidDraw(gl, program);
+				    popMatrix();
+				popMatrix();
             popMatrix();
         popMatrix();
     }
@@ -280,14 +279,9 @@ function drawVan() {
         multScale(256, 0, 256);
         drawFloor();
     popMatrix();
-
     pushMatrix();
-
         multTranslation(vanPosition[0], 0 , vanPosition[1]);
-
         multRotationY(vanYaw);
-
-
         pushMatrix();
             multScale(512, 256, 256);
             gl.uniform4fv(fColorLoc, [0.5, 1.0, 0.5, 1.0]);
@@ -296,7 +290,7 @@ function drawVan() {
         popMatrix();
         pushMatrix();
             multTranslation(0, 153, 0);
-            gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+            multRotationY(antennaRotation);
             drawAntenna();
         popMatrix();
         pushMatrix();
