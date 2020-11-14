@@ -158,6 +158,7 @@ function drawVan() {
             popMatrix();
             pushMatrix();
                 multTranslation(0, 20, 0);
+                multRotationZ(antennaPivot);
                 pushMatrix()
                     multScale(30, 30, 30);
                     gl.uniform4fv(fColorLoc, [0.75, 0.0, 1.0, 1.0]);
@@ -165,7 +166,6 @@ function drawVan() {
                     sphereDraw(gl, program);
                 popMatrix();
                 pushMatrix();
-                    multRotationZ(antennaPivot);
                     pushMatrix();
                         multTranslation(0, 50, 0);
 						multScale(20, 100, 20);
