@@ -117,6 +117,8 @@ function accel(){
 }
 
 
+const FLOOR_X = 50;
+const FLOOR_Z = 50;
 window.onload = function() {
 
     gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
@@ -132,6 +134,7 @@ window.onload = function() {
     cubeInit(gl);
 	paraboloidInit(gl);
 	torusInit(gl,10);
+	gridInit(gl, FLOOR_X, FLOOR_Z);
 
 	gl.enable(gl.DEPTH_TEST);
 
@@ -223,49 +226,12 @@ function drawVan() {
         drawAxle(wheelAngle);
     }
 
-    function drawFloor() {
-
-        function drawSquareAt(i, j) {
-            pushMatrix();
-                multTranslation(i, 0, j);
-                gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-                gl.drawElements(gl.LINES, cube_edges.length, gl.UNSIGNED_BYTE, 0);
-            popMatrix();
-        }
-
-        // Factored out for performance reasons (see cubeDrawWireFrame())
-        gl.useProgram(program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, cube_points_buffer);
-        let vPosition = gl.getAttribLocation(program, "vPosition");
-        gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vPosition);
-        gl.bindBuffer(gl.ARRAY_BUFFER, cube_normals_buffer);
-        let vNormal = gl.getAttribLocation(program, "vNormal");
-        gl.vertexAttribPointer(vNormal, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(vNormal);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cube_edges_buffer);
-
-        let gridSize = Math.ceil(VP_DISTANCE / 128);
-        gridSize = gridSize % 2 === 0 ? gridSize : gridSize + 1;
-        gl.uniform4fv(fColorLoc, [0.2, 0.2, 0.2, 1.0]);
-        for (let i = -gridSize; i < gridSize; i += 2) {
-            for (let j = -gridSize - 1; j < gridSize; j += 2) {
-                drawSquareAt(i, j);
-            }
-        }
-
-        gl.uniform4fv(fColorLoc, [0.5, 0.125, 0.125, 1.0]);
-        for (let i = -gridSize - 1; i < gridSize; i += 2) {
-            for (let j = -gridSize; j < gridSize; j += 2) {
-                drawSquareAt(i, j);
-            }
-        }
-    }
-
     pushMatrix();
         multTranslation(0,-140,0);
-        multScale(256, 0, 256);
-        drawFloor();
+        multScale(256 * FLOOR_X, 0, 256 * FLOOR_Z);
+        gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+        gl.uniform4fv(fColorLoc, [0.2, 0.2, 0.2, 1.0]);
+        gridDrawWireFrame(gl, program);
     popMatrix();
     multTranslation(vanPosition[0], 0 , vanPosition[1]);
     multRotationY(vanYaw);
