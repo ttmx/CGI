@@ -42,6 +42,9 @@ window.onload = function() {
     }
 
     document.getElementById("axonometricButton").click();
+    document.getElementById("cube").click();
+    document.getElementById("frontFacade").click();
+    document.getElementById("dimetric").click();
 
     gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
     resize(gl);
