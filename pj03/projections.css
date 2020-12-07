@@ -21,6 +21,14 @@ body {
     background-color: #777;
 }
 
+#Common {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    //width: TODO;
+    position: absolute;
+    bottom: 0;
+}
+
 /* Style the tab */
 .tab {
     overflow: hidden;
