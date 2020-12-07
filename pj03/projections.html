@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<head>
+    <script type="text/javascript" src="../Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../Common/initShaders.js"></script>
+    <script type="text/javascript" src="../Common/MV.js"></script>
+    <script type="text/javascript" src="../Common/sphere.js"></script>
+    <script type="text/javascript" src="../Common/cube.js"></script>
+    <script type="text/javascript" src="../Common/cylinder.js"></script>
+    <script type="text/javascript" src="../Common/torus.js"></script>
+    <script type="text/javascript" src="projections.js"></script>
+    <script type="text/javascript" src="./paraboloid.js"></script>
+    <link rel="stylesheet" href="projections.css">
+    <title>Projections</title>
+</head>
+
+<script id="default-vertex" type="x-shader/x-vertex">
+    uniform mat4 mModelView;
+    uniform mat4 mProjection;
+
+    attribute vec4 vPosition;
+    attribute vec3 vNormal;
+
+    varying vec3 fNormal;
+
+    void main() {
+        gl_Position = mProjection * mModelView * vPosition;
+        fNormal = vNormal;
+    }
+</script>
+
+<script id="default-fragment" type="x-shader/x-fragment">
+    precision highp float;
+    varying vec3 fNormal;
+
+    void main() {
+        gl_FragColor = vec4(abs(fNormal), 1.0);
+    }
+</script>
+
+<body>
+<canvas id="gl-canvas">
+    Ooops! Your browser doen't support WebGL!
+</canvas>
+<div id="controls">
+    <!-- Tab links -->
+    <div class="tab">
+        <button id="orthogonalButton" class="tabLink">Orthogonal</button>
+        <button id="axonometricButton" class="tabLink">Axonometric</button>
+        <button id="perspectiveButton" class="tabLink">Perspective</button>
+    </div>
+
+    <!-- Tab content -->
+    <div id="Orthogonal" class="tabContent">
+        <h3>London</h3>
+        <p>London is the capital city of England.</p>
+    </div>
+
+    <div id="Axonometric" class="tabContent">
+        <h3>Paris</h3>
+        <p>Paris is the capital of France.</p>
+
+        <label for="theta">&theta;</label>
+        <input type="range" min="1" max="100" value="50" class="slider" id="theta">
+        <label for="gamma">&gamma;</label>
+        <input type="range" min="1" max="100" value="50" class="slider" id="gamma"><br>
+
+
+        <input type="radio" id="freeform" name="axonometricRadio" value="freeform">
+        <label for="freeform">Freeform</label><br>
+        <input type="radio" id="trimetric" name="axonometricRadio" value="trimetric">
+        <label for="trimetric">Trimetric Projection</label><br>
+        <input type="radio" id="dimetric" name="axonometricRadio" value="dimetric">
+        <label for="dimetric">Dimetric Projection</label><br>
+        <input type="radio" id="isometric" name="axonometricRadio" value="isometric">
+        <label for="isometric">Isometric Projection</label>
+
+    </div>
+
+    <div id="Perspective" class="tabContent">
+        <h3>Tokyo</h3>
+        <p>Tokyo is the capital of Japan.</p>
+    </div>
+</div>
+
+</body>
