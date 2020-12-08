@@ -6,12 +6,13 @@ var aspect;
 var projection, modelView;
 var mProjectionLoc, mModelViewLoc;
 
-var zBuffer, culling;
-var filled;
 var objectToDraw;
 var scale = 1; //TODO
+let settings = {};
 
 var eye = [200,200,700]; //TODO
+
+// I just realised I don't seem to have filled mode working on the paraboloid, but gonna stop for today
 
 function projectionMatrix(projectionName) {
     if (projectionName === undefined) {
@@ -49,6 +50,8 @@ function openProjection(evt, projectionName) {
     evt.currentTarget.className += " active";
 
     projection = projectionMatrix(projectionName);
+	settings.general.view = projectionName;
+
 }
 
 function resize(gl) {
@@ -73,13 +76,67 @@ window.onload = function() {
         objectRadio.onclick = (e) => objectToDraw = e.currentTarget.value;
     }
 
+	for (const orthRadio of document.getElementsByName("orthogonalRadio")){
+		orthRadio.onclick = (e) => settings.orth.view = e.currentTarget.value;
+	}
+
+	for (const axoRadio of document.getElementsByName("axonometricRadio")){
+		axoRadio.onclick = (e) => {
+			settings.axo.view = e.currentTarget.value;
+			if (settings.axo.view == "freeform"){
+				document.getElementById("gamma").disabled = false;
+				document.getElementById("theta").disabled = false;
+			}else{
+				document.getElementById("gamma").disabled = true;
+				document.getElementById("theta").disabled = true;
+			}
+
+			function changeTheGama(g,t){
+				document.getElementById("gamma").value = g;
+				document.getElementById("theta").value = t;
+				settings.axo.gamma = g;
+				settings.axo.theta = t;
+			}
+
+			switch(e.currentTarget.value){
+					//Duvido muito seriamente que seja assim que queremos
+					//mas good enough for UI poc TODO
+					//also pretty sure A/B isnt the same as gama/theta mas nao indo as aulas nao sei converter um valor no outro, woops
+				case "trimetric":
+					changeTheGama(54.16,23.16);
+					break;
+				case "dimetric":
+					changeTheGama(42,7);
+					break;
+				case "isometric":
+					changeTheGama(30,30);
+					break;
+			}
+		}
+	}
+
+	settings.axo = {
+		'gamma':50,
+		'theta':50
+	}
+
+	settings.orth = {}
+
+	settings.general = {
+		'view': "axonometric",
+		'zbuffer': false,
+		'culling': false,
+		'filled': false
+	}
+
+
+	document.getElementById("gamma").onclick = (e) => settings.axo.gamma = e.currentTarget.value;
+	document.getElementById("theta").onclick = (e) => settings.axo.theta = e.currentTarget.value;
+
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
     document.getElementById("frontFacade").click();
     document.getElementById("dimetric").click();
-
-    zBuffer = culling = false;
-    filled = false;
 
     gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
     resize(gl);
@@ -107,36 +164,55 @@ function render() {
     function drawObject(objectToDraw) {
         switch (objectToDraw) {
             case "sphere":
-                sphereDraw(gl, program, filled);
+                sphereDraw(gl, program, settings.general.filled);
                 break;
             case "cube":
-                cubeDraw(gl, program, filled);
+                cubeDraw(gl, program, settings.general.filled);
                 break;
             case "torus":
-                torusDraw(gl, program, filled);
+                torusDraw(gl, program, settings.general.filled);
                 break;
             case "cylinder":
-                cylinderDraw(gl, program, filled);
+                cylinderDraw(gl, program, settings.general.filled);
                 break;
             case "paraboloid":
-                paraboloidDraw(gl, program, filled);
+                paraboloidDraw(gl, program, settings.general.filled);
                 break;
         }
     }
 
-    function selectedView() {
-        //TODO
-        // switch (radio option) {
-        //      // return lookAt(eye, [0,0,0], [0,1,0]);
-        // }
-        return undefined;
-    }
+	function selectedView() {
+		switch (settings.general.view) {
+			case "Axonometric":
+				eye = [200, 200, 700];
+				break;
+			case "Orthogonal":
+				switch (settings.orth.view) {
+					case "topView":
+						eye = [0, 1, 0.0000001]; //TODO Very important, no idea how to make it display from above
+						break;
+					case "frontFacade":
+						eye = [1, 0, 0];
+						break;
+					case "rightFacade":
+						eye = [0, 0, 1];
+						console.log("right");
+						break;
+				}
+			case "Perspective":
+				break;
+			default:
+				console.log("You picked " + settings.general.view + " wrong bro");
+
+		}
+		return lookAt(eye, [0, 0, 0], [0, 1, 0]);
+	}
 
     requestAnimationFrame(render);
 
     resize(gl);
 
-    if (zBuffer) {
+    if (settings.general.zbuffer) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     } else {
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -144,7 +220,7 @@ function render() {
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
 
-    modelView = mat4(); //TODO tempoprary
+    modelView = selectedView(); //TODO temporary
     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
 
     drawObject(objectToDraw);
@@ -154,15 +230,19 @@ window.onkeydown = (e) => {
     switch (e.key.toLowerCase()) {
         case 'w':
             //Wireframe
+			settings.general.filled = false;
             break;
         case 'f':
             //Filled
+			settings.general.filled = true;
             break;
         case 'z':
 			//z-buffer
+			settings.general.zbuffer = !settings.general.zbuffer;
             break;
         case 'b':
 			//culling
+			settings.general.culling = !settings.general.culling;
             break;
     }
 }
