@@ -13,18 +13,26 @@ var scale = 1; //TODO
 
 var eye = [200,200,700]; //TODO
 
-function openProjection(evt, projectionName) {
-
-    function selectedProjection() {
-        switch (projectionName) {
-            case "Orthogonal":
-                return ortho(-scale*aspect,scale*aspect, -scale, scale,-10,10);
-            case "Axonometric":
-                return; //TODO
-            case "Perspective":
-                return; //TODO
+function projectionMatrix(projectionName) {
+    if (projectionName === undefined) {
+        for (const tabLink of document.getElementsByClassName("tabLink")) {
+            if (tabLink.className.includes(" active")) {
+                projectionName = tabLink.textContent;
+                break;
+            }
         }
     }
+    switch (projectionName) {
+        case "Orthogonal":
+            return ortho(-scale*aspect,scale*aspect, -scale, scale,-10,10);
+        case "Axonometric":
+            return; //TODO
+        case "Perspective":
+            return; //TODO
+    }
+}
+
+function openProjection(evt, projectionName) {
 
     // Get all elements with class="tabContent" and hide them
     for (const tabContent of document.getElementsByClassName("tabContent")) {
@@ -40,7 +48,7 @@ function openProjection(evt, projectionName) {
     document.getElementById(projectionName).style.display = "block";
     evt.currentTarget.className += " active";
 
-    projection = selectedProjection();
+    projection = projectionMatrix(projectionName);
 }
 
 function resize(gl) {
@@ -50,6 +58,7 @@ function resize(gl) {
         gl.canvas.width = gl.canvas.clientWidth;
         gl.canvas.height = gl.canvas.clientHeight;
         aspect = gl.canvas.width / gl.canvas.height;
+        projection = projectionMatrix();
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 }
