@@ -3,12 +3,29 @@ var program;
 
 var aspect;
 
+var projection, modelView;
 var mProjectionLoc, mModelViewLoc;
 
-var modelView;
-var eye = [200,200,700];
+var zBuffer, culling;
+var filled;
+var objectToDraw;
+var scale = 1; //TODO
+
+var eye = [200,200,700]; //TODO
 
 function openProjection(evt, projectionName) {
+
+    function selectedProjection() {
+        switch (projectionName) {
+            case "Orthogonal":
+                return ortho(-scale*aspect,scale*aspect, -scale, scale,-10,10);
+            case "Axonometric":
+                return; //TODO
+            case "Perspective":
+                return; //TODO
+        }
+    }
+
     // Get all elements with class="tabContent" and hide them
     for (const tabContent of document.getElementsByClassName("tabContent")) {
         tabContent.style.display = "none";
@@ -22,6 +39,8 @@ function openProjection(evt, projectionName) {
     // Show the current tab, and add an "active" class to the button that opened the tab
     document.getElementById(projectionName).style.display = "block";
     evt.currentTarget.className += " active";
+
+    projection = selectedProjection();
 }
 
 function resize(gl) {
@@ -41,10 +60,17 @@ window.onload = function() {
         tabLink.onclick = (e) => openProjection(e, tabLink.textContent);
     }
 
+    for (const objectRadio of document.getElementsByName("objects")) {
+        objectRadio.onclick = (e) => objectToDraw = e.currentTarget.value;
+    }
+
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
     document.getElementById("frontFacade").click();
     document.getElementById("dimetric").click();
+
+    zBuffer = culling = false;
+    filled = false;
 
     gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
     resize(gl);
@@ -68,18 +94,51 @@ window.onload = function() {
 }
 
 function render() {
+
+    function drawObject(objectToDraw) {
+        switch (objectToDraw) {
+            case "sphere":
+                sphereDraw(gl, program, filled);
+                break;
+            case "cube":
+                cubeDraw(gl, program, filled);
+                break;
+            case "torus":
+                torusDraw(gl, program, filled);
+                break;
+            case "cylinder":
+                cylinderDraw(gl, program, filled);
+                break;
+            case "paraboloid":
+                paraboloidDraw(gl, program, filled);
+                break;
+        }
+    }
+
+    function selectedView() {
+        //TODO
+        // switch (radio option) {
+        //      // return lookAt(eye, [0,0,0], [0,1,0]);
+        // }
+        return undefined;
+    }
+
     requestAnimationFrame(render);
 
     resize(gl);
-    // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    //
-    // let projection = ortho(-VP_DISTANCE*aspect,VP_DISTANCE*aspect, -VP_DISTANCE, VP_DISTANCE,-3*VP_DISTANCE,30*VP_DISTANCE);
-    //
-    // gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
-    //
-    // modelView = lookAt(eye, [0,0,0], [0,1,0]);
 
-    //drawObject();
+    if (zBuffer) {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    } else {
+        gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+
+    gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
+
+    modelView = mat4(); //TODO tempoprary
+    gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+
+    drawObject(objectToDraw);
 }
 
 window.onkeydown = (e) => {
