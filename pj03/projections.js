@@ -264,6 +264,7 @@ function render() {
 }
 
 window.onkeydown = (e) => {
+    needToRender = true;
     switch (e.key.toLowerCase()) {
         case 'w':
             //Wireframe
@@ -275,10 +276,20 @@ window.onkeydown = (e) => {
             break;
         case 'z':
             //z-buffer
+            if (settings.general.zbuffer) {
+                gl.disable(gl.DEPTH_TEST);
+            } else {
+                gl.enable(gl.DEPTH_TEST);
+            }
             settings.general.zbuffer = !settings.general.zbuffer;
             break;
         case 'b':
             //culling
+            if (settings.general.culling) {
+                gl.disable(gl.CULL_FACE);
+            } else {
+                gl.enable(gl.CULL_FACE);
+            }
             settings.general.culling = !settings.general.culling;
             break;
     }
