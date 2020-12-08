@@ -52,10 +52,9 @@ function resize(gl) {
 
         gl.canvas.width = gl.canvas.clientWidth;
         gl.canvas.height = gl.canvas.clientHeight;
-        aspect = gl.canvas.width / gl.canvas.height;
-        projection = projectionMatrix(settings.general.projection);
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        return true;
     }
+    return false;
 }
 
 window.onload = function () {
@@ -147,7 +146,9 @@ window.onload = function () {
 
     gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
     resize(gl);
-    aspect = gl.canvas.width / gl.canvas.height;
+    aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    projection = projectionMatrix(settings.general.projection);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -224,7 +225,11 @@ function render() {
 
     requestAnimationFrame(render);
 
-    resize(gl);
+    if (resize(gl)) {
+        aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        projection = projectionMatrix(settings.general.projection);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
 
     if (settings.general.zbuffer) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
