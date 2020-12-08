@@ -179,32 +179,36 @@ function render() {
         }
     }
 
-	function selectedView() {
-		switch (settings.general.view) {
-			case "Axonometric":
-				eye = [200, 200, 700];
-				break;
-			case "Orthogonal":
-				switch (settings.orth.view) {
-					case "topView":
-						eye = [0, 1, 0.0000001]; //TODO Very important, no idea how to make it display from above
-						break;
-					case "frontFacade":
-						eye = [1, 0, 0];
-						break;
-					case "rightFacade":
-						eye = [0, 0, 1];
-						console.log("right");
-						break;
-				}
-			case "Perspective":
-				break;
-			default:
-				console.log("You picked " + settings.general.view + " wrong bro");
-
-		}
-		return lookAt(eye, [0, 0, 0], [0, 1, 0]);
-	}
+    function selectedView() {
+        let eye;
+        let at = [0, 0, 0];
+        let up = [0, 1, 0];
+        switch (settings.general.view) {
+            case "Axonometric":
+                eye = [200, 200, 700];
+                break;
+            case "Orthogonal":
+                switch (settings.orth.view) {
+                    case "topView":
+                        eye = [0, 1, 0];
+                        up = [0, 0, -1];
+                        break;
+                    case "frontFacade":
+                        eye = [0, 0, 1];
+                        break;
+                    case "rightFacade":
+                        eye = [1, 0, 0];
+                        break;
+                }
+                break;
+            case "Perspective":
+                break;
+            default:
+                console.log("You picked " + settings.general.view + " wrong bro");
+                break;
+        }
+        return lookAt(eye, at, up);
+    }
 
     requestAnimationFrame(render);
 
