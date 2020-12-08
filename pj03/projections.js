@@ -9,21 +9,60 @@ var mProjectionLoc, mModelViewLoc;
 var objectToDraw;
 var scale = 1; //TODO
 let settings = {};
+var needToRender = true;
 
 // I just realised I don't seem to have filled mode working on the paraboloid, but gonna stop for today
 
-function projectionMatrix(projectionName) {
+function updateProjectionMatrix(projectionName) {
     switch (projectionName) {
         case "Orthogonal":
         case "Axonometric":
             if (aspect >= 1) {
-                return ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
+                projection = ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
             } else {
-                return ortho(-scale, scale, -scale / aspect, scale / aspect, -10, 10);
+                projection = ortho(-scale, scale, -scale / aspect, scale / aspect, -10, 10);
             }
+            break;
         case "Perspective":
-            return; //TODO
+            //TODO
+            break;
     }
+    updateViewMatrix();
+}
+
+function updateViewMatrix() {
+    needToRender = true;
+    let eye;
+    let at = [0, 0, 0];
+    let up = [0, 1, 0];
+    switch (settings.general.projection) {
+        case "Axonometric":
+            eye = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 0, 1, 0]);
+            up = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 1, 0, 0]);
+            eye.pop();
+            up.pop();
+            break;
+        case "Orthogonal":
+            switch (settings.orth.view) {
+                case "topView":
+                    eye = [0, 1, 0];
+                    up = [0, 0, -1];
+                    break;
+                case "frontFacade":
+                    eye = [0, 0, 1];
+                    break;
+                case "rightFacade":
+                    eye = [1, 0, 0];
+                    break;
+            }
+            break;
+        case "Perspective":
+            break;
+        default:
+            console.log("You picked " + settings.general.projection + " wrong bro");
+            break;
+    }
+    modelView = lookAt(eye, at, up);
 }
 
 function openProjection(evt, projectionName) {
@@ -43,7 +82,7 @@ function openProjection(evt, projectionName) {
     evt.currentTarget.className += " active";
 
     settings.general.projection = projectionName;
-    projection = projectionMatrix(settings.general.projection);
+    updateProjectionMatrix(settings.general.projection);
 }
 
 function resize(gl) {
@@ -64,17 +103,22 @@ window.onload = function () {
     }
 
     for (const objectRadio of document.getElementsByName("objects")) {
-        objectRadio.onclick = (e) => objectToDraw = e.currentTarget.value;
+        objectRadio.onclick = (e) => {
+            objectToDraw = e.currentTarget.value;
+            needToRender = true;
+        }
     }
 
-    for (const orthRadio of document.getElementsByName("orthogonalRadio")) {
-        orthRadio.onclick = (e) => settings.orth.view = e.currentTarget.value;
+    for (const orthogonalRadio of document.getElementsByName("orthogonalRadio")) {
+        orthogonalRadio.onclick = (e) => {
+            settings.orth.view = e.currentTarget.value;
+            updateViewMatrix();
+        }
     }
 
-    for (const axoRadio of document.getElementsByName("axonometricRadio")) {
-        axoRadio.onclick = (e) => {
-            settings.axo.view = e.currentTarget.value;
-            if (settings.axo.view === "freeform") {
+    for (const axonometricRadio of document.getElementsByName("axonometricRadio")) {
+        axonometricRadio.onclick = (e) => {
+            if (e.currentTarget.value === "freeform") {
                 document.getElementById("gamma").disabled = false;
                 document.getElementById("theta").disabled = false;
             } else {
@@ -82,11 +126,11 @@ window.onload = function () {
                 document.getElementById("theta").disabled = true;
             }
 
-            function changeTheGama(g, t) {
-                document.getElementById("gamma").value = g;
-                document.getElementById("theta").value = t;
-                settings.axo.gamma = g;
-                settings.axo.theta = t;
+            function updateAxonometricAngles(gamma, theta) {
+                document.getElementById("gamma").value = gamma;
+                document.getElementById("theta").value = theta;
+                settings.axo.gamma = gamma;
+                settings.axo.theta = theta;
             }
 
             function toDecimalDegrees(degrees, minutes) {
@@ -109,15 +153,23 @@ window.onload = function () {
                 case "trimetric":
                     let a = toDecimalDegrees(54, 16);
                     let b = toDecimalDegrees(23, 16);
-                    changeTheGama(toGamma(a, b), toTheta(a, b));
+                    updateAxonometricAngles(toGamma(a, b), toTheta(a, b));
                     break;
                 case "dimetric":
-                    changeTheGama(toGamma(42, 7), toTheta(42, 7));
+                    updateAxonometricAngles(toGamma(42, 7), toTheta(42, 7));
                     break;
                 case "isometric":
-                    changeTheGama(toGamma(30, 30), toTheta(30, 30));
+                    updateAxonometricAngles(toGamma(30, 30), toTheta(30, 30));
                     break;
             }
+            updateViewMatrix();
+        }
+    }
+
+    for (const axonometricSlider of document.getElementsByClassName("axonometricSlider")) {
+        axonometricSlider.oninput = (e) => {
+            settings.axo[axonometricSlider.id] = e.currentTarget.value;
+            updateViewMatrix();
         }
     }
 
@@ -135,10 +187,6 @@ window.onload = function () {
         'filled': false
     }
 
-
-    document.getElementById("gamma").oninput = (e) => settings.axo.gamma = e.currentTarget.value;
-    document.getElementById("theta").oninput = (e) => settings.axo.theta = e.currentTarget.value;
-
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
     document.getElementById("frontFacade").click();
@@ -147,7 +195,7 @@ window.onload = function () {
     gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
     resize(gl);
     aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    projection = projectionMatrix(settings.general.projection);
+    updateProjectionMatrix(settings.general.projection);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -164,7 +212,21 @@ window.onload = function () {
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
 
-    render();
+    checkRender();
+}
+
+function checkRender() {
+    if (resize(gl)) {
+        needToRender = true;
+        aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        updateProjectionMatrix(settings.general.projection);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
+    if (needToRender) {
+        needToRender = false;
+        render();
+    }
+    requestAnimationFrame(checkRender);
 }
 
 function render() {
@@ -189,48 +251,6 @@ function render() {
         }
     }
 
-    function selectedView() {
-        let eye;
-        let at = [0, 0, 0];
-        let up = [0, 1, 0];
-        switch (settings.general.projection) {
-            case "Axonometric":
-                eye = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 0, 1, 0]);
-                up = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 1, 0, 0]);
-                eye.pop();
-                up.pop();
-                break;
-            case "Orthogonal":
-                switch (settings.orth.view) {
-                    case "topView":
-                        eye = [0, 1, 0];
-                        up = [0, 0, -1];
-                        break;
-                    case "frontFacade":
-                        eye = [0, 0, 1];
-                        break;
-                    case "rightFacade":
-                        eye = [1, 0, 0];
-                        break;
-                }
-                break;
-            case "Perspective":
-                break;
-            default:
-                console.log("You picked " + settings.general.projection + " wrong bro");
-                break;
-        }
-        return lookAt(eye, at, up);
-    }
-
-    requestAnimationFrame(render);
-
-    if (resize(gl)) {
-        aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        projection = projectionMatrix(settings.general.projection);
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    }
-
     if (settings.general.zbuffer) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     } else {
@@ -238,8 +258,6 @@ function render() {
     }
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
-
-    modelView = selectedView(); //TODO temporary
     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
 
     drawObject(objectToDraw);
