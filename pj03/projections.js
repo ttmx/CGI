@@ -23,13 +23,12 @@ function projectionMatrix(projectionName) {
     }
     switch (projectionName) {
         case "Orthogonal":
+        case "Axonometric":
             if (aspect >= 1) {
                 return ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
             } else {
                 return ortho(-scale, scale, -scale / aspect, scale / aspect, -10, 10);
             }
-        case "Axonometric":
-            return; //TODO
         case "Perspective":
             return; //TODO
     }
@@ -100,18 +99,33 @@ window.onload = function () {
                 settings.axo.theta = t;
             }
 
+            function toDecimalDegrees(degrees, minutes) {
+                return degrees + minutes * (1 / 60);
+            }
+
+            function toDegrees(radians) {
+                return radians * (180 / Math.PI);
+            }
+
+            function toTheta(a, b) {
+                return toDegrees(Math.atan(Math.sqrt(Math.tan(radians(a)) / Math.tan(radians(b)))) + Math.PI / 2);
+            }
+
+            function toGamma(a, b) {
+                return toDegrees(Math.asin(Math.sqrt(Math.tan(radians(a)) * Math.tan(radians(b)))));
+            }
+
             switch (e.currentTarget.value) {
-                //Duvido muito seriamente que seja assim que queremos
-                //mas good enough for UI poc TODO
-                //also pretty sure A/B isnt the same as gama/theta mas nao indo as aulas nao sei converter um valor no outro, woops
                 case "trimetric":
-                    changeTheGama(54.16, 23.16);
+                    let a = toDecimalDegrees(54, 16);
+                    let b = toDecimalDegrees(23, 16);
+                    changeTheGama(toGamma(a, b), toTheta(a, b));
                     break;
                 case "dimetric":
-                    changeTheGama(42, 7);
+                    changeTheGama(toGamma(42, 7), toTheta(42, 7));
                     break;
                 case "isometric":
-                    changeTheGama(30, 30);
+                    changeTheGama(toGamma(30, 30), toTheta(30, 30));
                     break;
             }
         }
@@ -125,15 +139,15 @@ window.onload = function () {
     settings.orth = {}
 
     settings.general = {
-        'projection': "axonometric",
+        'projection': "Axonometric",
         'zbuffer': false,
         'culling': false,
         'filled': false
     }
 
 
-    document.getElementById("gamma").onclick = (e) => settings.axo.gamma = e.currentTarget.value;
-    document.getElementById("theta").onclick = (e) => settings.axo.theta = e.currentTarget.value;
+    document.getElementById("gamma").oninput = (e) => settings.axo.gamma = e.currentTarget.value;
+    document.getElementById("theta").oninput = (e) => settings.axo.theta = e.currentTarget.value;
 
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
@@ -189,7 +203,10 @@ function render() {
         let up = [0, 1, 0];
         switch (settings.general.projection) {
             case "Axonometric":
-                eye = [200, 200, 700];
+                eye = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 0, 1, 0]);
+                up = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 1, 0, 0]);
+                eye.pop();
+                up.pop();
                 break;
             case "Orthogonal":
                 switch (settings.orth.view) {
