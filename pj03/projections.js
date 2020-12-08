@@ -37,8 +37,9 @@ function updateViewMatrix() {
     let up = [0, 1, 0];
     switch (settings.general.projection) {
         case "Axonometric":
-            eye = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 0, 1, 0]);
-            up = mult(mult(rotateY(settings.axo.theta), rotateX(settings.axo.gamma)), [0, 1, 0, 0]);
+            let rotationMatrix = mult(rotateY(-settings.axo.theta), rotateX(-settings.axo.gamma));
+            eye = mult(rotationMatrix, [0, 0, 1, 0]);
+            up = mult(rotationMatrix, [0, 1, 0, 0]);
             eye.pop();
             up.pop();
             break;
