@@ -52,7 +52,7 @@ function openProjection(evt, projectionName) {
     evt.currentTarget.className += " active";
 
     projection = projectionMatrix(projectionName);
-    settings.general.view = projectionName;
+    settings.general.projection = projectionName;
 
 }
 
@@ -125,7 +125,7 @@ window.onload = function () {
     settings.orth = {}
 
     settings.general = {
-        'view': "axonometric",
+        'projection': "axonometric",
         'zbuffer': false,
         'culling': false,
         'filled': false
@@ -187,7 +187,7 @@ function render() {
         let eye;
         let at = [0, 0, 0];
         let up = [0, 1, 0];
-        switch (settings.general.view) {
+        switch (settings.general.projection) {
             case "Axonometric":
                 eye = [200, 200, 700];
                 break;
@@ -208,7 +208,7 @@ function render() {
             case "Perspective":
                 break;
             default:
-                console.log("You picked " + settings.general.view + " wrong bro");
+                console.log("You picked " + settings.general.projection + " wrong bro");
                 break;
         }
         return lookAt(eye, at, up);
