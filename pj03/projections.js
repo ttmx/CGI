@@ -13,14 +13,6 @@ let settings = {};
 // I just realised I don't seem to have filled mode working on the paraboloid, but gonna stop for today
 
 function projectionMatrix(projectionName) {
-    if (projectionName === undefined) {
-        for (const tabLink of document.getElementsByClassName("tabLink")) {
-            if (tabLink.className.includes(" active")) {
-                projectionName = tabLink.textContent;
-                break;
-            }
-        }
-    }
     switch (projectionName) {
         case "Orthogonal":
         case "Axonometric":
@@ -50,9 +42,8 @@ function openProjection(evt, projectionName) {
     document.getElementById(projectionName).style.display = "block";
     evt.currentTarget.className += " active";
 
-    projection = projectionMatrix(projectionName);
     settings.general.projection = projectionName;
-
+    projection = projectionMatrix(settings.general.projection);
 }
 
 function resize(gl) {
@@ -62,7 +53,7 @@ function resize(gl) {
         gl.canvas.width = gl.canvas.clientWidth;
         gl.canvas.height = gl.canvas.clientHeight;
         aspect = gl.canvas.width / gl.canvas.height;
-        projection = projectionMatrix();
+        projection = projectionMatrix(settings.general.projection);
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 }
