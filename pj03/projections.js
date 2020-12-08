@@ -10,8 +10,6 @@ var objectToDraw;
 var scale = 1; //TODO
 let settings = {};
 
-var eye = [200,200,700]; //TODO
-
 // I just realised I don't seem to have filled mode working on the paraboloid, but gonna stop for today
 
 function projectionMatrix(projectionName) {
@@ -25,7 +23,7 @@ function projectionMatrix(projectionName) {
     }
     switch (projectionName) {
         case "Orthogonal":
-            return ortho(-scale*aspect,scale*aspect, -scale, scale,-10,10);
+            return ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
         case "Axonometric":
             return; //TODO
         case "Perspective":
@@ -50,7 +48,7 @@ function openProjection(evt, projectionName) {
     evt.currentTarget.className += " active";
 
     projection = projectionMatrix(projectionName);
-	settings.general.view = projectionName;
+    settings.general.view = projectionName;
 
 }
 
@@ -66,7 +64,7 @@ function resize(gl) {
     }
 }
 
-window.onload = function() {
+window.onload = function () {
 
     for (const tabLink of document.getElementsByClassName("tabLink")) {
         tabLink.onclick = (e) => openProjection(e, tabLink.textContent);
@@ -76,62 +74,62 @@ window.onload = function() {
         objectRadio.onclick = (e) => objectToDraw = e.currentTarget.value;
     }
 
-	for (const orthRadio of document.getElementsByName("orthogonalRadio")){
-		orthRadio.onclick = (e) => settings.orth.view = e.currentTarget.value;
-	}
+    for (const orthRadio of document.getElementsByName("orthogonalRadio")) {
+        orthRadio.onclick = (e) => settings.orth.view = e.currentTarget.value;
+    }
 
-	for (const axoRadio of document.getElementsByName("axonometricRadio")){
-		axoRadio.onclick = (e) => {
-			settings.axo.view = e.currentTarget.value;
-			if (settings.axo.view == "freeform"){
-				document.getElementById("gamma").disabled = false;
-				document.getElementById("theta").disabled = false;
-			}else{
-				document.getElementById("gamma").disabled = true;
-				document.getElementById("theta").disabled = true;
-			}
+    for (const axoRadio of document.getElementsByName("axonometricRadio")) {
+        axoRadio.onclick = (e) => {
+            settings.axo.view = e.currentTarget.value;
+            if (settings.axo.view === "freeform") {
+                document.getElementById("gamma").disabled = false;
+                document.getElementById("theta").disabled = false;
+            } else {
+                document.getElementById("gamma").disabled = true;
+                document.getElementById("theta").disabled = true;
+            }
 
-			function changeTheGama(g,t){
-				document.getElementById("gamma").value = g;
-				document.getElementById("theta").value = t;
-				settings.axo.gamma = g;
-				settings.axo.theta = t;
-			}
+            function changeTheGama(g, t) {
+                document.getElementById("gamma").value = g;
+                document.getElementById("theta").value = t;
+                settings.axo.gamma = g;
+                settings.axo.theta = t;
+            }
 
-			switch(e.currentTarget.value){
-					//Duvido muito seriamente que seja assim que queremos
-					//mas good enough for UI poc TODO
-					//also pretty sure A/B isnt the same as gama/theta mas nao indo as aulas nao sei converter um valor no outro, woops
-				case "trimetric":
-					changeTheGama(54.16,23.16);
-					break;
-				case "dimetric":
-					changeTheGama(42,7);
-					break;
-				case "isometric":
-					changeTheGama(30,30);
-					break;
-			}
-		}
-	}
+            switch (e.currentTarget.value) {
+                //Duvido muito seriamente que seja assim que queremos
+                //mas good enough for UI poc TODO
+                //also pretty sure A/B isnt the same as gama/theta mas nao indo as aulas nao sei converter um valor no outro, woops
+                case "trimetric":
+                    changeTheGama(54.16, 23.16);
+                    break;
+                case "dimetric":
+                    changeTheGama(42, 7);
+                    break;
+                case "isometric":
+                    changeTheGama(30, 30);
+                    break;
+            }
+        }
+    }
 
-	settings.axo = {
-		'gamma':50,
-		'theta':50
-	}
+    settings.axo = {
+        'gamma': 50,
+        'theta': 50
+    }
 
-	settings.orth = {}
+    settings.orth = {}
 
-	settings.general = {
-		'view': "axonometric",
-		'zbuffer': false,
-		'culling': false,
-		'filled': false
-	}
+    settings.general = {
+        'view': "axonometric",
+        'zbuffer': false,
+        'culling': false,
+        'filled': false
+    }
 
 
-	document.getElementById("gamma").onclick = (e) => settings.axo.gamma = e.currentTarget.value;
-	document.getElementById("theta").onclick = (e) => settings.axo.theta = e.currentTarget.value;
+    document.getElementById("gamma").onclick = (e) => settings.axo.gamma = e.currentTarget.value;
+    document.getElementById("theta").onclick = (e) => settings.axo.theta = e.currentTarget.value;
 
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
@@ -150,8 +148,8 @@ window.onload = function() {
     sphereInit(gl);
     cylinderInit(gl);
     cubeInit(gl);
-	paraboloidInit(gl);
-	torusInit(gl,10);
+    paraboloidInit(gl);
+    torusInit(gl, 10);
 
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
@@ -230,19 +228,19 @@ window.onkeydown = (e) => {
     switch (e.key.toLowerCase()) {
         case 'w':
             //Wireframe
-			settings.general.filled = false;
+            settings.general.filled = false;
             break;
         case 'f':
             //Filled
-			settings.general.filled = true;
+            settings.general.filled = true;
             break;
         case 'z':
-			//z-buffer
-			settings.general.zbuffer = !settings.general.zbuffer;
+            //z-buffer
+            settings.general.zbuffer = !settings.general.zbuffer;
             break;
         case 'b':
-			//culling
-			settings.general.culling = !settings.general.culling;
+            //culling
+            settings.general.culling = !settings.general.culling;
             break;
     }
 }
