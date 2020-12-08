@@ -256,6 +256,9 @@ function render() {
     } else {
         gl.clear(gl.COLOR_BUFFER_BIT);
     }
+    if (settings.general.culling) {
+        gl.cullFace(gl.BACK);
+    }
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
