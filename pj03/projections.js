@@ -23,7 +23,11 @@ function projectionMatrix(projectionName) {
     }
     switch (projectionName) {
         case "Orthogonal":
-            return ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
+            if (aspect >= 1) {
+                return ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
+            } else {
+                return ortho(-scale, scale, -scale / aspect, scale / aspect, -10, 10);
+            }
         case "Axonometric":
             return; //TODO
         case "Perspective":
