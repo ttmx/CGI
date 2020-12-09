@@ -284,8 +284,10 @@ window.onkeydown = (e) => {
             //z-buffer
             if (settings.general.zbuffer) {
                 gl.disable(gl.DEPTH_TEST);
+                document.getElementById("zBufferStatus").textContent = "Off";
             } else {
                 gl.enable(gl.DEPTH_TEST);
+                document.getElementById("zBufferStatus").textContent = "On";
             }
             settings.general.zbuffer = !settings.general.zbuffer;
             break;
@@ -293,8 +295,10 @@ window.onkeydown = (e) => {
             //culling
             if (settings.general.culling) {
                 gl.disable(gl.CULL_FACE);
+                document.getElementById("cullingStatus").textContent = "Off";
             } else {
                 gl.enable(gl.CULL_FACE);
+                document.getElementById("cullingStatus").textContent = "On";
             }
             settings.general.culling = !settings.general.culling;
             break;
