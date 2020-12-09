@@ -24,7 +24,7 @@ function updateProjectionMatrix(projectionName) {
             }
             break;
         case "Perspective":
-            //TODO
+            projection = perspective(settings.perspective.fov, aspect, 0.5, 20);
             break;
     }
     updateViewMatrix();
@@ -58,6 +58,7 @@ function updateViewMatrix() {
             }
             break;
         case "Perspective":
+            eye = [0, 0, settings.perspective.d];
             break;
         default:
             console.log("You picked " + settings.general.projection + " wrong bro");
@@ -174,12 +175,24 @@ window.onload = function () {
         }
     }
 
+    for (const perspectiveSlider of document.getElementsByClassName("perspectiveSlider")) {
+        perspectiveSlider.oninput = (e) => {
+            settings.perspective[perspectiveSlider.id] = e.currentTarget.value;
+            updateProjectionMatrix(settings.general.projection);
+        }
+    }
+
     settings.axo = {
         'gamma': 50,
         'theta': 50
     }
 
     settings.orth = {}
+
+    settings.perspective = {
+        'fov': 70,
+        'd': 1.5
+    }
 
     settings.general = {
         'projection': "Axonometric",
