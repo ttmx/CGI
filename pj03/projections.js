@@ -212,6 +212,7 @@ window.onload = function () {
 
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
+	vEyeLoc = gl.getUniformLocation(program,"viewPos");
 
     checkRender();
 }
@@ -263,6 +264,7 @@ function render() {
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
+	// gl.uniformVec3fv(vEyeLoc,false,eye); TODO talk about approach to lighting
 
     drawObject(objectToDraw);
 }

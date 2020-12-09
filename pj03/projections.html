@@ -32,6 +32,7 @@
 <script id="default-fragment" type="x-shader/x-fragment">
     precision highp float;
     varying vec3 fNormal;
+	uniform vec3 viewPos;
 
     void main() {
         gl_FragColor = vec4(abs(fNormal), 1.0);
