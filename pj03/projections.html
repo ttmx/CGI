@@ -15,33 +15,102 @@
 </head>
 
 <script id="default-vertex" type="x-shader/x-vertex">
-    uniform mat4 mModelView;
-    uniform mat4 mProjection;
+    uniform bool lighting;
+    uniform bool perspectiveProjection;
 
-    attribute vec4 vPosition;
-    attribute vec3 vNormal;
+    uniform vec4 lightPosition;
 
-    varying vec3 fNormal;
+    attribute vec4 vPosition;// vertex position in modelling coordinates
+    attribute vec4 vNormal;// vertex normal in modelling coordinates
+
+    uniform mat4 mModelView;// model-view transformation
+    uniform mat4 mNormals;// model-view transformation for normals
+    uniform mat4 mProjection;// projection matrix
+
+    varying vec3 fNormal;// normal vector in camera space
+    varying vec3 fLight;// Light vector in camera space
+    varying vec3 fViewer;// View vector in camera space
 
     void main() {
+        if (lighting) {
+            // Compute position in camera frame
+            vec3 posC = (mModelView * vPosition).xyz;
+
+            // Compute normal in camera frame
+            fNormal = (mNormals * vNormal).xyz;
+            // Compute light vector in camera frame
+            if (lightPosition.w == 0.0) {
+                fLight = normalize((mNormals * lightPosition).xyz);
+            } else {
+                fLight = normalize((mModelView * lightPosition).xyz - posC);
+            }
+
+            // Compute the view vector
+            if (perspectiveProjection) {
+                fViewer = -posC;// Perspective projection
+            } else {
+                fViewer = vec3(0, 0, 1);// Parallel projection only
+            }
+        } else {
+            fNormal = vNormal.xyz;
+        }
+
+        // Compute vertex position in clip coordinates (as usual)
         gl_Position = mProjection * mModelView * vPosition;
-        fNormal = vNormal;
     }
 </script>
 
 <script id="default-fragment" type="x-shader/x-fragment">
-    precision highp float;
+    precision mediump float;
+
+    uniform bool lighting;
+
+    varying vec3 fPosition;
     varying vec3 fNormal;
-	uniform vec3 viewPos;
+
+    uniform vec3 materialAmb;
+    uniform vec3 materialDif;
+    uniform vec3 materialSpe;
+    uniform float shininess;
+
+    const vec3 lightAmb = vec3(0.2, 0.2, 0.2);
+    const vec3 lightDif = vec3(0.7, 0.7, 0.7);
+    const vec3 lightSpe = vec3(1.0, 1.0, 1.0);
+
+    varying vec3 fLight;
+    varying vec3 fViewer;
 
     void main() {
-        gl_FragColor = vec4(abs(fNormal), 1.0);
+        if (lighting) {
+            vec3 ambientColor = lightAmb * materialAmb;
+            vec3 diffuseColor = lightDif * materialDif;
+            vec3 specularColor = lightSpe * materialSpe;
+
+            vec3 L = normalize(fLight);
+            vec3 V = normalize(fViewer);
+            vec3 N = normalize(fNormal);
+            vec3 H = normalize(L+V);
+
+            float diffuseFactor = max(dot(L, N), 0.0);
+            vec3 diffuse = diffuseFactor * diffuseColor;
+
+            float specularFactor = pow(max(dot(N, H), 0.0), shininess);
+            vec3 specular = specularFactor * specularColor;
+
+            if (dot(L, N) < 0.0) {
+                specular = vec3(0.0, 0.0, 0.0);
+            }
+
+            gl_FragColor = vec4(ambientColor + diffuse + specular, 1.0);
+        } else {
+            gl_FragColor = vec4(abs(fNormal), 1.0);
+        }
     }
 </script>
 
 <body>
 <canvas id="gl-canvas">
-    Ooops! Your browser doen't support WebGL!
+    Ooops! Your browser doesn't support WebGL!
 </canvas>
 <div id="controls">
     <!-- Tab links -->
@@ -62,12 +131,25 @@
     </div>
 
     <div id="Axonometric" class="tabContent">
-        <label for="theta">&theta;</label>
-        <input type="range" min="0" max="360" value="180" class="axonometricSlider" id="theta">
-        <label for="gamma">&gamma;</label>
-        <input type="range" min="0" max="360" value="180" class="axonometricSlider" id="gamma"><br>
-
-
+        <table style="width:100%">
+            <tr>
+                <td>
+                    <label for="theta">&theta;</label>
+                </td>
+                <td>
+                    <input type="range" min="0" max="360" value="180" class="axonometricSlider" id="theta"><br>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="gamma">&gamma;</label>
+                </td>
+                <td>
+                    <input type="range" min="0" max="360" value="180" class="axonometricSlider" id="gamma"><br>
+                </td>
+            </tr>
+        </table>
+        <br>
         <input type="radio" id="freeform" name="axonometricRadio" value="freeform">
         <label for="freeform">Freeform</label><br>
         <input type="radio" id="trimetric" name="axonometricRadio" value="trimetric">
@@ -76,20 +158,136 @@
         <label for="dimetric">Dimetric (A=42&ordm;, B=7&ordm;)</label><br>
         <input type="radio" id="isometric" name="axonometricRadio" value="isometric">
         <label for="isometric">Isometric (A=30&ordm;, B=30&ordm;)</label>
-
     </div>
 
     <div id="Perspective" class="tabContent">
-        <label for="fov">FOV</label>
-        <input type="range" min="30" max="110" value="70" class="perspectiveSlider" id="fov">
-        <label for="d">d</label>
-        <input type="range" min="1.5" max="19" value="5" step="0.1" class="perspectiveSlider" id="d"><br>
+        <table>
+            <tr>
+                <td>
+                    <label for="fov">FOV</label>
+                </td>
+                <td>
+                    <input type="range" min="30" max="110" value="70" class="perspectiveSlider" id="fov"><br>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="d">d</label>
+                </td>
+                <td>
+                    <input type="range" min="1.5" max="19" value="5" step="0.1" class="perspectiveSlider" id="d"><br>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div id="Common">
+        <!-- Rounded switch -->
+        <label for="lighting">Lighting</label><input type="checkbox" id="lighting"><br>
+        <div id="lightingControls">
+            <table>
+                <tr>
+                    <th></th>
+                    <th>x</th>
+                    <th>y</th>
+                    <th>z</th>
+                </tr>
+                <tr>
+                    <td>Light position:</td>
+                    <td>
+                        <label for="lightPosX"></label>
+                        <input type="number" min="-20" max="20" value="0.0" step="0.1" class="lightPosSlider" id="lightPosX">
+                    </td>
+                    <td>
+                        <label for="lightPosY"></label>
+                        <input type="number" min="-20" max="20" value="1.8" step="0.1" class="lightPosSlider" id="lightPosY">
+                    </td>
+                    <td>
+                        <label for="lightPosZ"></label>
+                        <input type="number" min="-20" max="20" value="1.3" step="0.1" class="lightPosSlider" id="lightPosZ">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Ambient reflection:</td>
+                    <td>
+                        <label for="lightAmbX"></label>
+                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightAmbSlider" id="lightAmbX">
+                    </td>
+                    <td>
+                        <label for="lightAmbY"></label>
+                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightAmbSlider" id="lightAmbY">
+                    </td>
+                    <td>
+                        <label for="lightAmbZ"></label>
+                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightAmbSlider" id="lightAmbZ">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Diffuse reflection:</td>
+                    <td>
+                        <label for="lightDifX"></label>
+                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightDifSlider" id="lightDifX">
+                    </td>
+                    <td>
+                        <label for="lightDifY"></label>
+                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightDifSlider" id="lightDifY">
+                    </td>
+                    <td>
+                        <label for="lightDifZ"></label>
+                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightDifSlider" id="lightDifZ">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Specular reflection:</td>
+                    <td>
+                        <label for="lightSpeX"></label>
+                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightSpeSlider" id="lightSpeX">
+                    </td>
+                    <td>
+                        <label for="lightSpeY"></label>
+                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightSpeSlider" id="lightSpeY">
+                    </td>
+                    <td>
+                        <label for="lightSpeZ"></label>
+                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightSpeSlider" id="lightSpeZ">
+                    </td>
+                </tr>
+            </table>
+            <br>
+            <table>
+                <tr>
+                    <td>
+                        <label for="lightType">Light type:</label>
+                    </td>
+                    <td>
+                        <select id="lightType">
+                            <option value="point">Point</option>
+                            <option value="directional">Directional</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="lightColor">Light color: </label>
+                    </td>
+                    <td>
+                        <input type="color" value="#ff0000" id="lightColor">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="shininess">Shininess: </label>
+                    </td>
+                    <td>
+                        <input type="number" min="1" max="64" value="32" step="1" id="shininess">
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br>
         Z-Buffer: <span id="zBufferStatus">Off</span><br>
         Culling: <span id="cullingStatus">Off</span><br>
-
+        <br>
         <input type="radio" id="sphere" name="objects" value="sphere">
         <label for="sphere">Sphere</label><br>
         <input type="radio" id="cube" name="objects" value="cube">
@@ -99,7 +297,7 @@
         <input type="radio" id="cylinder" name="objects" value="cylinder">
         <label for="cylinder">Cylinder</label><br>
         <input type="radio" id="paraboloid" name="objects" value="paraboloid">
-        <label for="paraboloid">Paraboloid</label><br>
+        <label for="paraboloid">Paraboloid</label>
     </div>
 </div>
 

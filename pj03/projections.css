@@ -64,3 +64,11 @@ body {
     border: 1px solid #ccc;
     border-top: none;
 }
+
+input[type=number] {
+    width: 48px;
+}
+
+#lightingControls {
+    display: none;
+}

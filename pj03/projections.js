@@ -3,12 +3,14 @@ var program;
 
 var aspect;
 
-var projection, modelView;
-var mProjectionLoc, mModelViewLoc;
+var projection, modelView, normals;
+var mProjectionLoc, mModelViewLoc, mNormalsLoc;
+var mLightingLoc, mPerspectiveProjectionLoc;
 
 var objectToDraw;
 var scale = 1; //TODO
 let settings = {};
+let uniforms = {};
 var needToRender = true;
 
 // I just realised I don't seem to have filled mode working on the paraboloid, but gonna stop for today
@@ -65,6 +67,7 @@ function updateViewMatrix() {
             break;
     }
     modelView = lookAt(eye, at, up);
+    normals = normalMatrix(modelView);
 }
 
 function openProjection(evt, projectionName) {
@@ -99,6 +102,35 @@ function resize(gl) {
 }
 
 window.onload = function () {
+
+    settings.axo = {
+        gamma: 50,
+        theta: 50
+    }
+
+    settings.orth = {};
+
+    settings.perspective = {
+        fov: 70,
+        d: 1.5
+    }
+
+    settings.general = {
+        projection: "Axonometric",
+        zBuffer: false,
+        culling: false,
+        filled: false,
+        lighting: false
+    }
+
+    settings.lighting = {
+        Pos: [],
+        Amb: [],
+        Dif: [],
+        Spe: [],
+        shininess: null,
+        lightColor: []
+    };
 
     for (const tabLink of document.getElementsByClassName("tabLink")) {
         tabLink.onclick = (e) => openProjection(e, tabLink.textContent);
@@ -182,24 +214,68 @@ window.onload = function () {
         }
     }
 
-    settings.axo = {
-        'gamma': 50,
-        'theta': 50
+    for (const lightingSetting of ["Pos", "Amb", "Dif", "Spe"]) {
+        for (const lightSlider of document.getElementsByClassName("light".concat(lightingSetting, "Slider"))) {
+            function toIndex(char) {
+                switch (char.toLowerCase()) {
+                    case "x":
+                        return 0;
+                    case "y":
+                        return 1;
+                    case "z":
+                        return 2;
+                }
+            }
+
+            lightSlider.oninput = (e) => {
+                needToRender = true;
+                settings.lighting[lightingSetting][toIndex(lightSlider.id.slice(-1))] = e.currentTarget.value;
+            }
+            lightSlider.dispatchEvent(new Event('input'));
+        }
     }
 
-    settings.orth = {}
+    document.getElementById("lightColor").oninput = (ev => {
+        needToRender = true;
+        // #XXXXXX -> ["XX", "XX", "XX"]
+        let color = ev.currentTarget.value.match(/[A-Za-z0-9]{2}/g);
+        // ["XX", "XX", "XX"] -> [n, n, n]
+        color = color.map(v => {
+            return parseInt(v, 16) / 256;
+        });
+        settings.lighting.lightColor = color;
+    });
+    document.getElementById("lightColor").dispatchEvent(new Event('input'));
 
-    settings.perspective = {
-        'fov': 70,
-        'd': 1.5
-    }
+    document.getElementById("shininess").oninput = (ev => {
+        needToRender = true;
+        settings.lighting.shininess = ev.currentTarget.value;
+    });
+    document.getElementById("shininess").dispatchEvent(new Event('input'));
 
-    settings.general = {
-        'projection': "Axonometric",
-        'zbuffer': false,
-        'culling': false,
-        'filled': false
-    }
+    document.getElementById("lightType").onchange = (ev => {
+        needToRender = true;
+        switch (ev.currentTarget.value) {
+            case "point":
+                settings.lighting.Pos[3] = 1.0;
+                break;
+            case "directional":
+                settings.lighting.Pos[3] = 0.0;
+                break;
+        }
+
+    });
+    document.getElementById("lightType").dispatchEvent(new Event('change'));
+
+    document.getElementById("lighting").onclick = (ev => {
+        needToRender = true;
+        settings.general.lighting = ev.currentTarget.checked;
+        if (settings.general.lighting) {
+            document.getElementById("lightingControls").style.display = "block";
+        } else {
+            document.getElementById("lightingControls").style.display = "none";
+        }
+    });
 
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
@@ -225,7 +301,46 @@ window.onload = function () {
 
     mModelViewLoc = gl.getUniformLocation(program, "mModelView");
     mProjectionLoc = gl.getUniformLocation(program, "mProjection");
-	vEyeLoc = gl.getUniformLocation(program,"viewPos");
+    mNormalsLoc = gl.getUniformLocation(program, "mNormals");
+    mLightingLoc = gl.getUniformLocation(program, "lighting");
+    mPerspectiveProjectionLoc = gl.getUniformLocation(program, "perspectiveProjection");
+
+    uniforms = {
+        lighting: {
+            Pos: {
+                loc: gl.getUniformLocation(program, "lightPosition"),
+                setter: function (value) {
+                    gl.uniform4fv(this.loc, new Float32Array(value))
+                }
+            },
+            Amb: {
+                loc: gl.getUniformLocation(program, "materialAmb"),
+                setter: function (value) {
+                    gl.uniform3fv(this.loc, new Float32Array(value))
+                }
+            },
+            Dif: {
+                loc: gl.getUniformLocation(program, "materialDif"),
+                setter: function (value) {
+                    gl.uniform3fv(this.loc, new Float32Array(value))
+                }
+            },
+            Spe: {
+                loc: gl.getUniformLocation(program, "materialSpe"),
+                setter: function (value) {
+                    gl.uniform3fv(this.loc, new Float32Array(value))
+                }
+            },
+            shininess: {
+                loc: gl.getUniformLocation(program, "shininess"),
+                setter: function (value) {
+                    gl.uniform1f(this.loc, value)
+                }
+            },
+            // TODO wtf is "cor/intensidade da fonte de luz"
+            //lightColor: gl.getUniformLocation(program, "lightPosition")
+        }
+    }
 
     checkRender();
 }
@@ -266,7 +381,7 @@ function render() {
         }
     }
 
-    if (settings.general.zbuffer) {
+    if (settings.general.zBuffer) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     } else {
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -277,7 +392,15 @@ function render() {
 
     gl.uniformMatrix4fv(mProjectionLoc, false, flatten(projection));
     gl.uniformMatrix4fv(mModelViewLoc, false, flatten(modelView));
-	// gl.uniformVec3fv(vEyeLoc,false,eye); TODO talk about approach to lighting
+    gl.uniformMatrix4fv(mNormalsLoc, false, flatten(normals));
+    gl.uniform1i(mLightingLoc, settings.general.lighting);
+    if (settings.general.lighting) {
+        gl.uniform1i(mPerspectiveProjectionLoc, settings.general.projection === "Perspective");
+        for (const uniformName in uniforms.lighting) {
+            const uniform = uniforms.lighting[uniformName];
+            uniform.setter(settings.lighting[uniformName]);
+        }
+    }
 
     drawObject(objectToDraw);
 }
@@ -295,14 +418,14 @@ window.onkeydown = (e) => {
             break;
         case 'z':
             //z-buffer
-            if (settings.general.zbuffer) {
+            if (settings.general.zBuffer) {
                 gl.disable(gl.DEPTH_TEST);
                 document.getElementById("zBufferStatus").textContent = "Off";
             } else {
                 gl.enable(gl.DEPTH_TEST);
                 document.getElementById("zBufferStatus").textContent = "On";
             }
-            settings.general.zbuffer = !settings.general.zbuffer;
+            settings.general.zBuffer = !settings.general.zBuffer;
             break;
         case 'b':
             //culling
