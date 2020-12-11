@@ -314,7 +314,7 @@ window.onload = function () {
 	}
 
 
-    document.getElementById("axonometricButton").click();
+    document.getElementById("perspectiveButton").click();
     document.getElementById("cube").click();
     document.getElementById("frontFacade").click();
     document.getElementById("dimetric").click();
@@ -450,6 +450,9 @@ window.onkeydown = (e) => {
             //Wireframe
             settings.general.filled = false;
             break;
+		case 'l':
+			document.getElementById("lighting").click();
+			break;
         case 'f':
             //Filled
             settings.general.filled = true;

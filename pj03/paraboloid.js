@@ -33,7 +33,7 @@ function paraboloidBuild(nlat, nlon)
     // Generate upper cap
     var north = vec3(0,-r+THICC,0);
     paraboloid_points.push(north);
-    paraboloid_normals.push(vec3(0,1,0));
+    paraboloid_normals.push(vec3(0,-1,0));
 
     // Generate middle
     for(var i=0, phi=Math.PI/2-d_phi; i<nlat; i++, phi-=d_phi) {
