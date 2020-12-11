@@ -144,11 +144,13 @@ window.onload = function () {
 
     settings.lighting = {
         Pos: [],
-        Amb: [],
-        Dif: [],
-        Spe: [],
+        lightAmbColor: [],
+        lightDifColor: [],
+        lightSpeColor: [],
         shininess: null,
-        lightColor: []
+        Ka: null,
+        Kd: null,
+        Ks: null
     };
 
     for (const tabLink of document.getElementsByClassName("tabLink")) {
@@ -233,44 +235,47 @@ window.onload = function () {
         }
     }
 
-    for (const lightingSetting of ["Pos", "Amb", "Dif", "Spe"]) {
-        for (const lightSlider of document.getElementsByClassName("light".concat(lightingSetting, "Slider"))) {
-            function toIndex(char) {
-                switch (char.toLowerCase()) {
-                    case "x":
-                        return 0;
-                    case "y":
-                        return 1;
-                    case "z":
-                        return 2;
-                }
-            }
-
-            lightSlider.oninput = (e) => {
-                needToRender = true;
-                settings.lighting[lightingSetting][toIndex(lightSlider.id.slice(-1))] = e.currentTarget.value;
-            }
-            lightSlider.dispatchEvent(new Event('input'));
+    for (const materialSetting of ["Amb", "Dif", "Spe", "Shininess"]) {
+        let lightSlider = document.getElementById("material".concat(materialSetting, "Slider"));
+        lightSlider.oninput = (e) => {
+            needToRender = true;
+            settings.lighting[lightSlider.name] = e.currentTarget.value;
         }
+        lightSlider.dispatchEvent(new Event('input'));
     }
 
-    document.getElementById("lightColor").oninput = (ev => {
-        needToRender = true;
-        // #XXXXXX -> ["XX", "XX", "XX"]
-        let color = ev.currentTarget.value.match(/[A-Za-z0-9]{2}/g);
-        // ["XX", "XX", "XX"] -> [n, n, n]
-        color = color.map(v => {
-            return parseInt(v, 16) / 256;
-        });
-        settings.lighting.lightColor = color;
-    });
-    document.getElementById("lightColor").dispatchEvent(new Event('input'));
+    for (const lightSlider of document.getElementsByClassName("lightPosSlider")) {
+        function toIndex(char) {
+            switch (char.toLowerCase()) {
+                case "x":
+                    return 0;
+                case "y":
+                    return 1;
+                case "z":
+                    return 2;
+            }
+        }
 
-    document.getElementById("shininess").oninput = (ev => {
-        needToRender = true;
-        settings.lighting.shininess = ev.currentTarget.value;
-    });
-    document.getElementById("shininess").dispatchEvent(new Event('input'));
+        lightSlider.oninput = (e) => {
+            needToRender = true;
+            settings.lighting.Pos[toIndex(lightSlider.id.slice(-1))] = e.currentTarget.value;
+        }
+        lightSlider.dispatchEvent(new Event('input'));
+    }
+
+    for (const lightColor of document.getElementsByClassName("lightColor")) {
+        lightColor.oninput = (ev) => {
+            needToRender = true;
+            // #XXXXXX -> ["XX", "XX", "XX"]
+            let color = ev.currentTarget.value.match(/[A-Za-z0-9]{2}/g);
+            // ["XX", "XX", "XX"] -> [n, n, n]
+            color = color.map(v => {
+                return parseInt(v, 16) / 256;
+            });
+            settings.lighting[lightColor.id] = color;
+        }
+        lightColor.dispatchEvent(new Event('input'));
+    }
 
     document.getElementById("lightType").onchange = (ev => {
         needToRender = true;
@@ -323,7 +328,7 @@ window.onload = function () {
     }
 
 
-    document.getElementById("perspectiveButton").click();
+    document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
     document.getElementById("frontFacade").click();
     document.getElementById("dimetric").click();
@@ -359,20 +364,20 @@ window.onload = function () {
                     gl.uniform4fv(this.loc, new Float32Array(value))
                 }
             },
-            Amb: {
-                loc: gl.getUniformLocation(program, "materialAmb"),
+            lightAmbColor: {
+                loc: gl.getUniformLocation(program, "lightAmb"),
                 setter: function (value) {
                     gl.uniform3fv(this.loc, new Float32Array(value))
                 }
             },
-            Dif: {
-                loc: gl.getUniformLocation(program, "materialDif"),
+            lightDifColor: {
+                loc: gl.getUniformLocation(program, "lightDif"),
                 setter: function (value) {
                     gl.uniform3fv(this.loc, new Float32Array(value))
                 }
             },
-            Spe: {
-                loc: gl.getUniformLocation(program, "materialSpe"),
+            lightSpeColor: {
+                loc: gl.getUniformLocation(program, "lightSpe"),
                 setter: function (value) {
                     gl.uniform3fv(this.loc, new Float32Array(value))
                 }
@@ -383,8 +388,24 @@ window.onload = function () {
                     gl.uniform1f(this.loc, value)
                 }
             },
-            // TODO wtf is "cor/intensidade da fonte de luz"
-            //lightColor: gl.getUniformLocation(program, "lightPosition")
+            Ka: {
+                loc: gl.getUniformLocation(program, "Ka"),
+                setter: function (value) {
+                    gl.uniform1f(this.loc, value)
+                }
+            },
+            Kd: {
+                loc: gl.getUniformLocation(program, "Kd"),
+                setter: function (value) {
+                    gl.uniform1f(this.loc, value)
+                }
+            },
+            Ks: {
+                loc: gl.getUniformLocation(program, "Ks"),
+                setter: function (value) {
+                    gl.uniform1f(this.loc, value)
+                }
+            }
         }
     }
 
@@ -459,9 +480,9 @@ window.onkeydown = (e) => {
             //Wireframe
             settings.general.filled = false;
             break;
-		case 'l':
-			document.getElementById("lighting").click();
-			break;
+        case 'l':
+            document.getElementById("lighting").click();
+            break;
         case 'f':
             //Filled
             settings.general.filled = true;

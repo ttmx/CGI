@@ -68,23 +68,23 @@
     varying vec3 fPosition;
     varying vec3 fNormal;
 
-    uniform vec3 materialAmb;
-    uniform vec3 materialDif;
-    uniform vec3 materialSpe;
+    uniform float Ka;
+    uniform float Kd;
+    uniform float Ks;
     uniform float shininess;
 
-    const vec3 lightAmb = vec3(0.2, 0.2, 0.2);
-    const vec3 lightDif = vec3(0.7, 0.7, 0.7);
-    const vec3 lightSpe = vec3(1.0, 1.0, 1.0);
+    uniform vec3 lightAmb;
+    uniform vec3 lightDif;
+    uniform vec3 lightSpe;
 
     varying vec3 fLight;
     varying vec3 fViewer;
 
     void main() {
         if (lighting) {
-            vec3 ambientColor = lightAmb * materialAmb;
-            vec3 diffuseColor = lightDif * materialDif;
-            vec3 specularColor = lightSpe * materialSpe;
+            vec3 ambientColor = lightAmb * Ka;
+            vec3 diffuseColor = lightDif * Kd;
+            vec3 specularColor = lightSpe * Ks;
 
             vec3 L = normalize(fLight);
             vec3 V = normalize(fViewer);
@@ -109,9 +109,9 @@
 </script>
 
 <body>
-<canvas id="gl-canvas">
+<div id="canvasWrap"><canvas id="gl-canvas">
     Ooops! Your browser doesn't support WebGL!
-</canvas>
+</canvas></div>
 <div id="controls">
     <!-- Tab links -->
     <div class="tab">
@@ -202,62 +202,7 @@
                                id="lightPosZ">
                     </td>
                 </tr>
-                <tr>
-                    <td>Ambient reflection:</td>
-                    <td>
-                        <label for="lightAmbX"></label>
-                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightAmbSlider"
-                               id="lightAmbX">
-                    </td>
-                    <td>
-                        <label for="lightAmbY"></label>
-                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightAmbSlider"
-                               id="lightAmbY">
-                    </td>
-                    <td>
-                        <label for="lightAmbZ"></label>
-                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightAmbSlider"
-                               id="lightAmbZ">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Diffuse reflection:</td>
-                    <td>
-                        <label for="lightDifX"></label>
-                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightDifSlider"
-                               id="lightDifX">
-                    </td>
-                    <td>
-                        <label for="lightDifY"></label>
-                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightDifSlider"
-                               id="lightDifY">
-                    </td>
-                    <td>
-                        <label for="lightDifZ"></label>
-                        <input type="number" min="0" max="1" value="0.0" step="0.1" class="lightDifSlider"
-                               id="lightDifZ">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Specular reflection:</td>
-                    <td>
-                        <label for="lightSpeX"></label>
-                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightSpeSlider"
-                               id="lightSpeX">
-                    </td>
-                    <td>
-                        <label for="lightSpeY"></label>
-                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightSpeSlider"
-                               id="lightSpeY">
-                    </td>
-                    <td>
-                        <label for="lightSpeZ"></label>
-                        <input type="number" min="0" max="1" value="1.0" step="0.1" class="lightSpeSlider"
-                               id="lightSpeZ">
-                    </td>
-                </tr>
             </table>
-            <br>
             <table>
                 <tr>
                     <td>
@@ -272,18 +217,68 @@
                 </tr>
                 <tr>
                     <td>
-                        <label for="lightColor">Light color: </label>
+                        <label for="lightAmbColor">Ambient color: </label>
                     </td>
                     <td>
-                        <input type="color" value="#ff0000" id="lightColor">
+                        <input type="color" value="#ff0000" id="lightAmbColor" class="lightColor">
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <label for="shininess">Shininess: </label>
+                        <label for="lightDifColor">Diffuse color: </label>
                     </td>
                     <td>
-                        <input type="number" min="1" max="64" value="32" step="1" id="shininess">
+                        <input type="color" value="#ff0000" id="lightDifColor" class="lightColor">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="lightSpeColor">Specular color: </label>
+                    </td>
+                    <td>
+                        <input type="color" value="#ffffff" id="lightSpeColor" class="lightColor">
+                    </td>
+                </tr>
+            </table>
+            <br>
+            <table>
+                <tr>
+                    <td>Material properties:</td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="materialAmbSlider">Ambient reflection (Ka):</label>
+                    </td>
+                    <td>
+                        <input type="range" min="0" max="1" value="0.2" step="0.01" name="Ka" class="materialSlider"
+                               id="materialAmbSlider">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="materialDifSlider">Diffuse reflection (Kd):</label>
+                    </td>
+                    <td>
+                        <input type="range" min="0" max="1" value="0.7" step="0.01" name="Kd" class="materialSlider"
+                               id="materialDifSlider">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="materialSpeSlider">Specular reflection (Ks):</label>
+                    </td>
+                    <td>
+                        <input type="range" min="0" max="1" value="1.0" step="0.01" name="Ks" class="materialSlider"
+                               id="materialSpeSlider">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="materialShininessSlider">Shininess:</label>
+                    </td>
+                    <td>
+                        <input type="range" min="1" max="64" value="32" step="1" name="shininess" class="materialSlider"
+                               id="materialShininessSlider">
                     </td>
                 </tr>
             </table>
