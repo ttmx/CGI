@@ -66,7 +66,6 @@ function updateViewMatrix() {
                 rotate(-settings.perspective.rot.y, cross(settings.perspective.up, settings.perspective.eye)));
 
             eye = scale(settings.perspective.d, normalize(settings.perspective.eye));
-            up = scale(settings.perspective.d, normalize(settings.perspective.up));
             eye[3] = 0;
             up[3] = 0;
             eye = mult(rotationMatrix, eye);
