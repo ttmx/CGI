@@ -8,7 +8,7 @@ var mProjectionLoc, mModelViewLoc, mNormalsLoc;
 var mLightingLoc, mPerspectiveProjectionLoc;
 
 var objectToDraw;
-var scale = 1; //TODO
+var zoomScale = 1; //TODO
 let settings = {};
 let uniforms = {};
 var needToRender = true;
@@ -20,14 +20,14 @@ function updateProjectionMatrix(projectionName) {
         case "Orthogonal":
         case "Axonometric":
             if (aspect >= 1) {
-                projection = ortho(-scale * aspect, scale * aspect, -scale, scale, -10, 10);
+                projection = ortho(-zoomScale * aspect, zoomScale * aspect, -zoomScale, zoomScale, -10, 10);
             } else {
-                projection = ortho(-scale, scale, -scale / aspect, scale / aspect, -10, 10);
+                projection = ortho(-zoomScale, zoomScale, -zoomScale / aspect, zoomScale / aspect, -10, 10);
             }
             break;
         case "Perspective":
-			let fovy = 2*Math.atan(scale/settings.perspective.d)*180/Math.PI;
-			projection = perspective(fovy, aspect, 0.1, scale*20);
+            let fovy = 2 * Math.atan(zoomScale / settings.perspective.d) * 180 / Math.PI;
+            projection = perspective(fovy, aspect, 0.1, zoomScale * 20);
             break;
     }
     updateViewMatrix();
@@ -38,10 +38,10 @@ function updateViewMatrix() {
     let eye;
     let at = [0, 0, 0];
     let up = [0, 1, 0];
-	let rotationMatrix;
+    let rotationMatrix;
     switch (settings.general.projection) {
         case "Axonometric":
-            rotationMatrix= mult(rotateY(-settings.axo.theta), rotateX(-settings.axo.gamma));
+            rotationMatrix = mult(rotateY(-settings.axo.theta), rotateX(-settings.axo.gamma));
             eye = mult(rotationMatrix, [0, 0, 1, 0]);
             up = mult(rotationMatrix, [0, 1, 0, 0]);
             eye.pop();
@@ -61,15 +61,22 @@ function updateViewMatrix() {
                     break;
             }
             break;
-		case "Perspective":
-			rotationMatrix = mult(rotateY(-settings.perspective.rot.x),
-				rotateX(-settings.perspective.rot.y));
-			eye = mult(rotationMatrix, [0, 0, settings.perspective.d, 0]);
-			up = mult(rotationMatrix, [0, 1, 0, 0]);
-			eye.pop();
-			up.pop();
-			break;
-		default:
+        case "Perspective":
+            rotationMatrix = mult(rotate(-settings.perspective.rot.x, settings.perspective.up),
+                rotate(-settings.perspective.rot.y, cross(settings.perspective.up, settings.perspective.eye)));
+
+            eye = scale(settings.perspective.d, normalize(settings.perspective.eye));
+            up = scale(settings.perspective.d, normalize(settings.perspective.up));
+            eye[3] = 0;
+            up[3] = 0;
+            eye = mult(rotationMatrix, eye);
+            up = mult(rotationMatrix, up);
+            eye.pop();
+            up.pop();
+            settings.perspective.eye = eye;
+            settings.perspective.up = up;
+            break;
+        default:
             console.log("You picked " + settings.general.projection + " wrong bro");
             break;
     }
@@ -119,10 +126,12 @@ window.onload = function () {
 
     settings.perspective = {
         d: 1.5,
-		rot:{
-			x: 0,
-			y:0
-		}
+        eye: [0, 0, 1],
+        up: [0, 1, 0],
+        rot: {
+            x: 0,
+            y: 0
+        }
     }
 
     settings.general = {
@@ -287,31 +296,31 @@ window.onload = function () {
         }
     });
 
-	document.getElementById("gl-canvas").onwheel = (e) => {
-		scale += e.deltaY * 0.01;
-		if (scale < 0) scale = 0;
-		updateProjectionMatrix(settings.general.projection);
-	}
-	document.getElementById("gl-canvas").onmousedown = (e) =>{
-		dragging = true;
-		dragOrigin = [e.screenX,e.screenY];
-	}
-	document.getElementById("gl-canvas").onmouseup = (e) =>{
-		dragging = false;
-	}
+    document.getElementById("gl-canvas").onwheel = (e) => {
+        zoomScale += e.deltaY * 0.01;
+        if (zoomScale < 0) zoomScale = 0;
+        updateProjectionMatrix(settings.general.projection);
+    }
+    document.getElementById("gl-canvas").onmousedown = (e) => {
+        dragging = true;
+        dragOrigin = [e.screenX, e.screenY];
+    }
+    document.getElementById("gl-canvas").onmouseup = (e) => {
+        dragging = false;
+    }
 
-	document.getElementById("gl-canvas").onmousemove = (e) =>{
-		if (dragging && settings.general.projection == "Perspective"){
-			drag = {
-				x: e.screenX-dragOrigin[0],
-				y: e.screenY-dragOrigin[1]
-			}
-			dragOrigin = [e.screenX,e.screenY];
-			settings.perspective.rot.x += drag.x
-			settings.perspective.rot.y += drag.y
-			updateProjectionMatrix("Perspective");
-		}
-	}
+    document.getElementById("gl-canvas").onmousemove = (e) => {
+        if (dragging && settings.general.projection === "Perspective") {
+            drag = {
+                x: e.screenX - dragOrigin[0],
+                y: e.screenY - dragOrigin[1]
+            }
+            dragOrigin = [e.screenX, e.screenY];
+            settings.perspective.rot.x = drag.x * 0.3;
+            settings.perspective.rot.y = drag.y * 0.3;
+            updateProjectionMatrix("Perspective");
+        }
+    }
 
 
     document.getElementById("perspectiveButton").click();
