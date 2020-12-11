@@ -12,8 +12,8 @@ var scale = 1; //TODO
 let settings = {};
 let uniforms = {};
 var needToRender = true;
-
-// I just realised I don't seem to have filled mode working on the paraboloid, but gonna stop for today
+var dragging = false;
+var dragOrigin;
 
 function updateProjectionMatrix(projectionName) {
     switch (projectionName) {
@@ -26,7 +26,8 @@ function updateProjectionMatrix(projectionName) {
             }
             break;
         case "Perspective":
-            projection = perspective(settings.perspective.fov, aspect, 0.5, 20);
+			let fovy = 2*Math.atan(scale/settings.perspective.d)*180/Math.PI;
+			projection = perspective(fovy, aspect, 0.1, scale*20);
             break;
     }
     updateViewMatrix();
@@ -37,9 +38,10 @@ function updateViewMatrix() {
     let eye;
     let at = [0, 0, 0];
     let up = [0, 1, 0];
+	let rotationMatrix;
     switch (settings.general.projection) {
         case "Axonometric":
-            let rotationMatrix = mult(rotateY(-settings.axo.theta), rotateX(-settings.axo.gamma));
+            rotationMatrix= mult(rotateY(-settings.axo.theta), rotateX(-settings.axo.gamma));
             eye = mult(rotationMatrix, [0, 0, 1, 0]);
             up = mult(rotationMatrix, [0, 1, 0, 0]);
             eye.pop();
@@ -59,10 +61,15 @@ function updateViewMatrix() {
                     break;
             }
             break;
-        case "Perspective":
-            eye = [0, 0, settings.perspective.d];
-            break;
-        default:
+		case "Perspective":
+			rotationMatrix = mult(rotateY(-settings.perspective.rot.x),
+				rotateX(-settings.perspective.rot.y));
+			eye = mult(rotationMatrix, [0, 0, settings.perspective.d, 0]);
+			up = mult(rotationMatrix, [0, 1, 0, 0]);
+			eye.pop();
+			up.pop();
+			break;
+		default:
             console.log("You picked " + settings.general.projection + " wrong bro");
             break;
     }
@@ -111,8 +118,11 @@ window.onload = function () {
     settings.orth = {};
 
     settings.perspective = {
-        fov: 70,
-        d: 1.5
+        d: 1.5,
+		rot:{
+			x: 0,
+			y:0
+		}
     }
 
     settings.general = {
@@ -277,6 +287,33 @@ window.onload = function () {
         }
     });
 
+	document.getElementById("gl-canvas").onwheel = (e) => {
+		scale += e.deltaY * 0.01;
+		if (scale < 0) scale = 0;
+		updateProjectionMatrix(settings.general.projection);
+	}
+	document.getElementById("gl-canvas").onmousedown = (e) =>{
+		dragging = true;
+		dragOrigin = [e.screenX,e.screenY];
+	}
+	document.getElementById("gl-canvas").onmouseup = (e) =>{
+		dragging = false;
+	}
+
+	document.getElementById("gl-canvas").onmousemove = (e) =>{
+		if (dragging && settings.general.projection == "Perspective"){
+			drag = {
+				x: e.screenX-dragOrigin[0],
+				y: e.screenY-dragOrigin[1]
+			}
+			dragOrigin = [e.screenX,e.screenY];
+			settings.perspective.rot.x += drag.x
+			settings.perspective.rot.y += drag.y
+			updateProjectionMatrix("Perspective");
+		}
+	}
+
+
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
     document.getElementById("frontFacade").click();
@@ -404,6 +441,7 @@ function render() {
 
     drawObject(objectToDraw);
 }
+
 
 window.onkeydown = (e) => {
     needToRender = true;
