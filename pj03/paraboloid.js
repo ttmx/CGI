@@ -33,20 +33,39 @@ function paraboloidBuild(nlat, nlon)
     // Generate upper cap
     var north = vec3(0,-r+THICC,0);
     paraboloid_points.push(north);
-    paraboloid_normals.push(vec3(0,-1,0));
+    paraboloid_normals.push(vec3(0,1,0));
 
     // Generate middle
+	let hasGenMiddle = false;
     for(var i=0, phi=Math.PI/2-d_phi; i<nlat; i++, phi-=d_phi) {
+		if (phi<=0 && !hasGenMiddle){
+			hasGenMiddle = true;
+			for(var j=0, theta=0; j<nlon; j++, theta+=d_theta) {
+				var pt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + THICC ,r*Math.cos(phi)*Math.sin(theta));
+				var n = vec3(pt);
+				paraboloid_points.push(pt);
+				paraboloid_normals.push(normalize(n));
+			}
+		}
         for(var j=0, theta=0; j<nlon; j++, theta+=d_theta) {
             var pt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + ((phi>0)?THICC:0) ,r*Math.cos(phi)*Math.sin(theta));
-            paraboloid_points.push(pt);
             var n = vec3(pt);
-            paraboloid_normals.push(normalize(n));
+			// if (phi<0 && !hasGenMiddle){
+			// 	var auxpt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + THICC ,r*Math.cos(phi)*Math.sin(theta))
+			// 	paraboloid_points.push(auxpt);
+			// 	paraboloid_normals.push(normalize(vec3(auxpt)));
+			// }
+            paraboloid_points.push(pt);
+			if (phi>0)
+				paraboloid_normals.push(normalize(scale(-1,n)));
+			else
+            	paraboloid_normals.push(normalize(n));
         }
     }
 
     // Generate lower cap
     var south = vec3(0,-r,0);
+	console.log("pos: ",paraboloid_points.length);
     paraboloid_points.push(south);
     paraboloid_normals.push(vec3(0,-1,0));
 
@@ -65,7 +84,7 @@ function paraboloidBuild(nlat, nlon)
     // general middle faces
     var offset=1;
 
-    for(var i=0; i<nlat-1; i++) {
+    for(var i=0; i<nlat; i++) {
         for(var j=0; j<nlon-1; j++) {
             var p = offset+i*nlon+j;
             paraboloid_faces.push(p);
@@ -87,7 +106,8 @@ function paraboloidBuild(nlat, nlon)
     }
 
     // // south pole faces
-    var offset = 1 + (nlat-1) * nlon;
+    var offset = 1 + nlat * nlon;
+	console.log("offset: "+offset);
     for(var j=0; j<nlon-1; j++) {
         paraboloid_faces.push(offset+nlon);
         paraboloid_faces.push(offset+j);
@@ -103,7 +123,7 @@ function paraboloidBuild(nlat, nlon)
         paraboloid_edges.push(i+1);
     }
 
-    for(var i=0; i<nlat; i++, p++) {
+    for(var i=0; i<nlat+1; i++, p++) {
         for(var j=0; j<nlon;j++, p++) {
             var p = 1 + i*nlon + j;
             paraboloid_edges.push(p);   // horizontal line (same latitude)
@@ -111,7 +131,7 @@ function paraboloidBuild(nlat, nlon)
                 paraboloid_edges.push(p+1);
             else paraboloid_edges.push(p+1-nlon);
 
-            if(i!=nlat-1) {
+            if(i!=nlat) {
                 paraboloid_edges.push(p);   // vertical line (same longitude)
                 paraboloid_edges.push(p+nlon);
             }
