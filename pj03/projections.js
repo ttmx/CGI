@@ -8,12 +8,11 @@ var mProjectionLoc, mModelViewLoc, mNormalsLoc;
 var mLightingLoc, mPerspectiveProjectionLoc;
 
 var objectToDraw;
-var zoomScale = 1; //TODO
+var zoomScale = 1;
 let settings = {};
 let uniforms = {};
 var needToRender = true;
 var dragging = false;
-var dragOrigin;
 
 function updateProjectionMatrix(projectionName) {
     switch (projectionName) {
@@ -65,7 +64,11 @@ function updateViewMatrix() {
             rotationMatrix = mult(rotate(-settings.perspective.rot.x, settings.perspective.up),
                 rotate(-settings.perspective.rot.y, cross(settings.perspective.up, settings.perspective.eye)));
 
+            settings.perspective.rot.x = 0;
+            settings.perspective.rot.y = 0;
+
             eye = scale(settings.perspective.d, normalize(settings.perspective.eye));
+            up = normalize(settings.perspective.up);
             eye[3] = 0;
             up[3] = 0;
             eye = mult(rotationMatrix, eye);
@@ -307,21 +310,19 @@ window.onload = function () {
     }
     document.getElementById("gl-canvas").onmousedown = (e) => {
         dragging = true;
-        dragOrigin = [e.screenX, e.screenY];
+        settings.perspective.rot.x = 0;
+        settings.perspective.rot.y = 0;
     }
     document.getElementById("gl-canvas").onmouseup = (e) => {
         dragging = false;
+        settings.perspective.rot.x = 0;
+        settings.perspective.rot.y = 0;
     }
 
     document.getElementById("gl-canvas").onmousemove = (e) => {
         if (dragging && settings.general.projection === "Perspective") {
-            drag = {
-                x: e.screenX - dragOrigin[0],
-                y: e.screenY - dragOrigin[1]
-            }
-            dragOrigin = [e.screenX, e.screenY];
-            settings.perspective.rot.x = drag.x * 0.3;
-            settings.perspective.rot.y = drag.y * 0.3;
+            settings.perspective.rot.x = e.movementX * 0.3;
+            settings.perspective.rot.y = e.movementY * 0.3;
             updateProjectionMatrix("Perspective");
         }
     }
