@@ -119,6 +119,8 @@ function resize(gl) {
 
 window.onload = function () {
 
+    gl = WebGLUtils.setupWebGL(document.getElementById('gl-canvas'));
+
     settings.axo = {
         gamma: 50,
         theta: 50
@@ -303,30 +305,46 @@ window.onload = function () {
         }
     });
 
-    document.getElementById("gl-canvas").onwheel = (e) => {
+    gl.canvas.requestPointerLock = gl.canvas.requestPointerLock || gl.canvas.mozRequestPointerLock;
+    document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+
+    document.addEventListener('pointerlockchange', lockChange, false);
+    document.addEventListener('mozpointerlockchange', lockChange, false);
+
+    function updateDrag(e) {
+        settings.perspective.rot.x = e.movementX * 0.3;
+        settings.perspective.rot.y = e.movementY * 0.3;
+        updateProjectionMatrix("Perspective");
+    }
+
+    function lockChange() {
+        if (document.pointerLockElement === gl.canvas ||
+            document.mozPointerLockElement === gl.canvas) {
+            document.addEventListener("mousemove", updateDrag, false);
+        } else {
+            document.removeEventListener("mousemove", updateDrag, false);
+        }
+    }
+
+    gl.canvas.onwheel = (e) => {
         zoomScale += e.deltaY * 0.01;
         if (zoomScale < 0) zoomScale = 0;
         updateProjectionMatrix(settings.general.projection);
     }
-    document.getElementById("gl-canvas").onmousedown = (e) => {
-        dragging = true;
-        settings.perspective.rot.x = 0;
-        settings.perspective.rot.y = 0;
-    }
-    document.getElementById("gl-canvas").onmouseup = (e) => {
-        dragging = false;
-        settings.perspective.rot.x = 0;
-        settings.perspective.rot.y = 0;
-    }
 
-    document.getElementById("gl-canvas").onmousemove = (e) => {
-        if (dragging && settings.general.projection === "Perspective") {
-            settings.perspective.rot.x = e.movementX * 0.3;
-            settings.perspective.rot.y = e.movementY * 0.3;
-            updateProjectionMatrix("Perspective");
+    gl.canvas.onmousedown = (e) => {
+        if (settings.general.projection === "Perspective") {
+            gl.canvas.requestPointerLock();
+            settings.perspective.rot.x = 0;
+            settings.perspective.rot.y = 0;
         }
     }
 
+    gl.canvas.onmouseup = (e) => {
+        document.exitPointerLock();
+        settings.perspective.rot.x = 0;
+        settings.perspective.rot.y = 0;
+    }
 
     document.getElementById("axonometricButton").click();
     document.getElementById("cube").click();
@@ -471,7 +489,6 @@ function render() {
 
     drawObject(objectToDraw);
 }
-
 
 window.onkeydown = (e) => {
     needToRender = true;
