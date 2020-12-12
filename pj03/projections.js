@@ -314,7 +314,7 @@ window.onload = function () {
     function updateDrag(e) {
         settings.perspective.rot.x = e.movementX * 0.3;
         settings.perspective.rot.y = e.movementY * 0.3;
-        updateProjectionMatrix("Perspective");
+        updateViewMatrix();
     }
 
     function lockChange() {
