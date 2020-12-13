@@ -201,7 +201,7 @@ window.onload = function () {
             }
 
             function toTheta(a, b) {
-                return toDegrees(Math.atan(Math.sqrt(Math.tan(radians(a)) / Math.tan(radians(b)))) + Math.PI / 2);
+                return toDegrees(Math.atan(Math.sqrt(Math.tan(radians(a)) / Math.tan(radians(b)))) - Math.PI / 2);
             }
 
             function toGamma(a, b) {

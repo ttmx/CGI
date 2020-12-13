@@ -103,7 +103,7 @@
 
             gl_FragColor = vec4(ambientColor + diffuse + specular, 1.0);
         } else {
-            gl_FragColor = vec4(abs(fNormal), 1.0);
+            gl_FragColor = vec4(fNormal, 1.0);
         }
     }
 </script>
@@ -137,7 +137,7 @@
                     <label for="theta">&theta;</label>
                 </td>
                 <td>
-                    <input type="range" min="0" max="360" value="180" class="axonometricSlider" id="theta"><br>
+                    <input type="range" min="-180" max="180" class="axonometricSlider" id="theta"><br>
                 </td>
             </tr>
             <tr>
@@ -145,7 +145,7 @@
                     <label for="gamma">&gamma;</label>
                 </td>
                 <td>
-                    <input type="range" min="0" max="360" value="180" class="axonometricSlider" id="gamma"><br>
+                    <input type="range" min="-180" max="180" class="axonometricSlider" id="gamma"><br>
                 </td>
             </tr>
         </table>
