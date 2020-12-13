@@ -41,20 +41,16 @@ function paraboloidBuild(nlat, nlon)
 		if (phi<=0 && !hasGenMiddle){
 			hasGenMiddle = true;
 			for(var j=0, theta=0; j<nlon; j++, theta+=d_theta) {
+				// var pt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + THICC ,r*Math.cos(phi)*Math.sin(theta));
 				var pt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + THICC ,r*Math.cos(phi)*Math.sin(theta));
-				var n = vec3(pt);
+            	var n = vec3(Math.cos(phi)*Math.cos(theta),-1,Math.cos(phi)*Math.sin(theta));
 				paraboloid_points.push(pt);
 				paraboloid_normals.push(normalize(n));
 			}
 		}
         for(var j=0, theta=0; j<nlon; j++, theta+=d_theta) {
             var pt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + ((phi>0)?THICC:0) ,r*Math.cos(phi)*Math.sin(theta));
-            var n = vec3(pt);
-			// if (phi<0 && !hasGenMiddle){
-			// 	var auxpt = vec3(r*Math.cos(phi)*Math.cos(theta),- r*Math.sin(phi)*Math.sin(phi) + THICC ,r*Math.cos(phi)*Math.sin(theta))
-			// 	paraboloid_points.push(auxpt);
-			// 	paraboloid_normals.push(normalize(vec3(auxpt)));
-			// }
+            var n = vec3(Math.cos(phi)*Math.cos(theta),-1,Math.cos(phi)*Math.sin(theta));
             paraboloid_points.push(pt);
 			if (phi>0)
 				paraboloid_normals.push(normalize(scale(-1,n)));
@@ -65,7 +61,6 @@ function paraboloidBuild(nlat, nlon)
 
     // Generate lower cap
     var south = vec3(0,-r,0);
-	console.log("pos: ",paraboloid_points.length);
     paraboloid_points.push(south);
     paraboloid_normals.push(vec3(0,-1,0));
 
@@ -107,7 +102,6 @@ function paraboloidBuild(nlat, nlon)
 
     // // south pole faces
     var offset = 1 + nlat * nlon;
-	console.log("offset: "+offset);
     for(var j=0; j<nlon-1; j++) {
         paraboloid_faces.push(offset+nlon);
         paraboloid_faces.push(offset+j);
@@ -141,7 +135,6 @@ function paraboloidBuild(nlat, nlon)
             }
         }
     }
-
 }
 
 function paraboloidUploadData(gl)
